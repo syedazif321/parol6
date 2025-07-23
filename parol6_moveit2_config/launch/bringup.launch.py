@@ -4,12 +4,10 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
-from moveit_configs_utils import MoveItConfigsBuilder
-from moveit_configs_utils.launches import generate_move_group_launch
 
+from moveit_configs_utils import MoveItConfigsBuilder
 
 def generate_launch_description():
-    # Robot + MoveIt config
     moveit_config = (
         MoveItConfigsBuilder("parol6", package_name="parol6_moveit2_config")
         .robot_description(file_path="config/parol6.urdf.xacro")
@@ -19,29 +17,22 @@ def generate_launch_description():
         .to_moveit_configs()
     )
 
-    # Gazebo launch
     gazebo_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             PathJoinSubstitution([
-                FindPackageShare("gazebo_ros"),
-                "launch",
-                "gazebo.launch.py"
+                FindPackageShare("gazebo_ros"), "launch", "gazebo.launch.py"
             ])
         ])
     )
 
-    # Robot State Publisher
-    rsp_launch = IncludeLaunchDescription(
+    robot_state_pub = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             PathJoinSubstitution([
-                FindPackageShare("parol6_moveit2_config"),
-                "launch",
-                "rsp.launch.py"
+                FindPackageShare("parol6_moveit2_config"), "launch", "rsp.launch.py"
             ])
         ])
     )
 
-    # Spawn robot in Gazebo
     spawn_entity = Node(
         package="gazebo_ros",
         executable="spawn_entity.py",
@@ -49,37 +40,53 @@ def generate_launch_description():
         output="screen"
     )
 
-    # Spawn controllers
     spawn_controllers = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             PathJoinSubstitution([
-                FindPackageShare("parol6_moveit2_config"),
-                "launch",
-                "spawn_controllers.launch.py"
+                FindPackageShare("parol6_moveit2_config"), "launch", "spawn_controllers.launch.py"
             ])
         ])
     )
 
-    # RViz node manually
-    rviz_node = Node(
-        package="rviz2",
-        executable="rviz2",
-        name="rviz2",
+    move_group_node = Node(
+        package="moveit_ros_move_group",
+        executable="move_group",
         output="screen",
-        arguments=["-d", str(moveit_config.package_path / "config" / "moveit.rviz")],
         parameters=[
             moveit_config.robot_description,
             moveit_config.robot_description_semantic,
             moveit_config.robot_description_kinematics,
             moveit_config.joint_limits,
+            moveit_config.planning_pipelines,
+            moveit_config.trajectory_execution,
+            {"use_sim_time": True}
+        ]
+    )
+
+    rviz_node = Node(
+        package="rviz2",
+        executable="rviz2",
+        name="rviz2",
+        output="screen",
+        arguments=[
+            "-d", PathJoinSubstitution([
+                FindPackageShare("parol6_moveit2_config"), "config", "moveit.rviz"
+            ])
         ],
+        parameters=[
+            moveit_config.robot_description,
+            moveit_config.robot_description_semantic,
+            moveit_config.robot_description_kinematics,
+            moveit_config.joint_limits,
+            {"use_sim_time": True}
+        ]
     )
 
     return LaunchDescription([
         gazebo_launch,
-        rsp_launch,
+        robot_state_pub,
         spawn_entity,
         spawn_controllers,
-        generate_move_group_launch(moveit_config),
+        move_group_node,
         rviz_node
     ])
