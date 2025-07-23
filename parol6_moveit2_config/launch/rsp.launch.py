@@ -1,7 +1,46 @@
-from moveit_configs_utils import MoveItConfigsBuilder
-from moveit_configs_utils.launches import generate_rsp_launch
-
+from launch import LaunchDescription
+from launch_ros.actions import Node
+from launch.substitutions import Command, PathJoinSubstitution, FindExecutable
+from launch_ros.substitutions import FindPackageShare
+import os
 
 def generate_launch_description():
-    moveit_config = MoveItConfigsBuilder("parol6", package_name="parol6_moveit2_config").to_moveit_configs()
-    return generate_rsp_launch(moveit_config)
+    # Robot Description
+    robot_description_content = Command([
+        PathJoinSubstitution([FindExecutable(name="xacro")]),
+        " ",
+        PathJoinSubstitution([
+            FindPackageShare("parol6_moveit2_config"),
+            "config",
+            "parol6.urdf.xacro"
+        ])
+    ])
+    robot_description = {"robot_description": robot_description_content}
+
+    # Robot State Publisher node
+    rsp_node = Node(
+        package="robot_state_publisher",
+        executable="robot_state_publisher",
+        parameters=[robot_description],
+        output="screen"
+    )
+
+    # ros2_control controller manager node
+    controller_manager = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[
+            robot_description,
+            PathJoinSubstitution([
+                FindPackageShare("parol6_moveit2_config"),
+                "config",
+                "ros2_controllers.yaml"
+            ])
+        ],
+        output="screen"
+    )
+
+    return LaunchDescription([
+        rsp_node,
+        controller_manager
+    ])

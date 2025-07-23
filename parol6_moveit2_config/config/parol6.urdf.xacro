@@ -10,5 +10,20 @@
 
 
     <xacro:parol6_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
+    <gazebo>
+      <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
+        <parameters>$(find parol6_moveit2_config)/config/ros2_controllers.yaml</parameters>
+      </plugin>
+    </gazebo>
+
+    <!-- World -->
+    <link name="world"/>
+
+    <!-- World fixed joint-->
+    <joint name="world_fixed" type="fixed">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <parent link="world"/>
+        <child link="base_link"/>
+    </joint>
 
 </robot>
