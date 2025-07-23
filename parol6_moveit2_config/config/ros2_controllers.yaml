@@ -1,11 +1,27 @@
-# This config file is used by ros2_control
 controller_manager:
   ros__parameters:
     update_rate: 100  # Hz
-
+    hardware_plugin: gazebo_ros2_control/GazeboSystem
     arm_controller:
       type: joint_trajectory_controller/JointTrajectoryController
-
+      joints:
+        - joint1
+        - joint2
+        - joint3
+        - joint4
+        - joint5
+        - joint6
+      state_publish_rate: 25.0
+      action_monitor_rate: 10.0
+      constraints:
+        goal_time: 0.6
+        stopped_velocity_tolerance: 0.05
+        joint1: { trajectory: 0.2, goal: 0.1 }
+        joint2: { trajectory: 0.2, goal: 0.1 }
+        joint3: { trajectory: 0.2, goal: 0.1 }
+        joint4: { trajectory: 0.2, goal: 0.1 }
+        joint5: { trajectory: 0.2, goal: 0.1 }
+        joint6: { trajectory: 0.2, goal: 0.1 }
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
