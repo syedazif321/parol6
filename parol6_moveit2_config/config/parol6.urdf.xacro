@@ -9,7 +9,9 @@
     <xacro:include filename="parol6.ros2_control.xacro" />
 
 
-    <xacro:parol6_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
+    <!-- <xacro:parol6_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/> -->
+    <xacro:parol6_ros2_control name="parol6" initial_positions_file="$(find parol6_moveit2_config)/config/initial_positions.yaml"/>
+
     <gazebo>
       <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
         <parameters>$(find parol6_moveit2_config)/config/ros2_controllers.yaml</parameters>
