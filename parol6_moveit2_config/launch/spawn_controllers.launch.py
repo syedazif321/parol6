@@ -1,7 +1,18 @@
-from moveit_configs_utils import MoveItConfigsBuilder
-from moveit_configs_utils.launches import generate_spawn_controllers_launch
-
+from launch import LaunchDescription
+from launch_ros.actions import Node
 
 def generate_launch_description():
-    moveit_config = MoveItConfigsBuilder("parol6", package_name="parol6_moveit2_config").to_moveit_configs()
-    return generate_spawn_controllers_launch(moveit_config)
+    return LaunchDescription([
+        Node(
+            package="controller_manager",
+            executable="spawner",
+            arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+            output="screen",
+        ),
+        Node(
+            package="controller_manager",
+            executable="spawner",
+            arguments=["arm_controller", "-c", "/controller_manager"],
+            output="screen",
+        ),
+    ])
