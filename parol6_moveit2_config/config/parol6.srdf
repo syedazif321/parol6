@@ -45,4 +45,6 @@
     <disable_collisions link1="L4" link2="L5" reason="Adjacent"/>
     <disable_collisions link1="L4" link2="L6" reason="Never"/>
     <disable_collisions link1="L5" link2="L6" reason="Adjacent"/>
+    <disable_collisions link1="L6" link2="suction_gripper" reason="adjacent"/>
+
 </robot>
