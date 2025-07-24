@@ -4,7 +4,7 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
-
+from launch.substitutions import Command, TextSubstitution
 from moveit_configs_utils import MoveItConfigsBuilder
 
 def generate_launch_description():
@@ -22,7 +22,13 @@ def generate_launch_description():
             PathJoinSubstitution([
                 FindPackageShare("gazebo_ros"), "launch", "gazebo.launch.py"
             ])
-        ])
+        ]),
+        launch_arguments={
+            'world': TextSubstitution(
+                text='/home/azif/projetcs/parol6/parol6_gazebo/worlds/table1.world'
+            ),
+            'use_sim_time': 'True',
+        }.items()
     )
 
     robot_state_pub = IncludeLaunchDescription(

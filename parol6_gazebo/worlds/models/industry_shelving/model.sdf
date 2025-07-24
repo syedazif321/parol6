@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <model name="industry_shelving">
+    <static>true</static>
+    <link name="link">
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://industry_shelving/meshes/industry_shelving.stl</uri>
+            <scale>0.1 0.5 0.5</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.1 0.5 0.5 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+          <specular>0.05 0.05 0.05 1</specular>
+        </material>
+      </visual>
+
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>model://industry_shelving/meshes/industry_shelving.stl</uri>
+            <scale>0.1 0.5 0.5</scale>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <bounce/>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+    </link>
+  </model>
+</sdf>
