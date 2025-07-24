@@ -27,21 +27,21 @@ def generate_launch_description():
     )
 
     # ros2_control controller manager node
-    controller_manager = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[
-            robot_description,
-            PathJoinSubstitution([
-                FindPackageShare("parol6_moveit2_config"),
-                "config",
-                "ros2_controllers.yaml"
-            ])
-        ],
-        output="screen"
-    )
+    # controller_manager = Node(
+    #     package="controller_manager",
+    #     executable="ros2_control_node",
+    #     parameters=[
+    #         robot_description,
+    #         PathJoinSubstitution([
+    #             FindPackageShare("parol6_moveit2_config"),
+    #             "config",
+    #             "ros2_controllers.yaml"
+    #         ])
+    #     ],
+    #     output="screen"
+    # )
 
     return LaunchDescription([
         rsp_node,
-        controller_manager
+        # controller_manager
     ])
