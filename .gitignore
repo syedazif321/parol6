@@ -8,5 +8,5 @@ install/
 log/
 bin/
 lib/
-
+.vscode
 
