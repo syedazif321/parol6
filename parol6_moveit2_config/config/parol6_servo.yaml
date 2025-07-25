@@ -1,0 +1,19 @@
+move_group_name: arm  # or 'manipulator' — depends on your SRDF
+planning_frame: base_link
+ee_frame_name: tool0  # or whatever your actual end-effector link is
+
+publish_joint_positions: true
+publish_joint_velocities: false
+check_collisions: true
+collision_check_rate: 10
+joint_limit_margin: 0.1
+
+command_in_type: "geometry_msgs::msg::TwistStamped"
+scale:
+  linear: 0.5
+  rotational: 0.5
+
+incoming_command_timeout: 0.1
+low_pass_filter_coeff: 2.0
+
+use_gazebo: true

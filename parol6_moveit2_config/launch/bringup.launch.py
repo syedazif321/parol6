@@ -27,7 +27,7 @@ def generate_launch_description():
         .to_moveit_configs()
     )
 
-    # Use relative path for world file (assumes this file is in parol6_moveit2_config/launch/)
+    # World file
     launch_file_dir = os.path.dirname(os.path.realpath(__file__))
     project_root = os.path.abspath(os.path.join(launch_file_dir, "..", ".."))
     world_file_path = os.path.join(project_root, "parol6_gazebo", "worlds", "table1.world")
@@ -101,11 +101,31 @@ def generate_launch_description():
         ]
     )
 
+    servo_params_path = os.path.join(
+        get_package_share_directory("parol6_moveit2_config"),
+        "config",
+        "moveit_servo.yaml"
+    )
+
+    servo_node = Node(
+        package="moveit_servo",
+        executable="servo_node_main",
+        name="servo_node",
+        output="screen",
+        parameters=[
+            moveit_config.robot_description,
+            moveit_config.robot_description_semantic,
+            servo_params_path,
+            {"use_sim_time": True}
+        ]
+    )
+
     return LaunchDescription([
         gazebo_launch,
         robot_state_pub,
         spawn_entity,
         spawn_controllers,
         move_group_node,
-        rviz_node
+        rviz_node,
+        servo_node, 
     ])
