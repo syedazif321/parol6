@@ -2,20 +2,35 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import PathJoinSubstitution
+from launch.substitutions import PathJoinSubstitution, TextSubstitution
 from launch_ros.substitutions import FindPackageShare
-from launch.substitutions import Command, TextSubstitution
+from ament_index_python.packages import get_package_share_directory
 from moveit_configs_utils import MoveItConfigsBuilder
 
+import os
+
 def generate_launch_description():
+    # URDF path from package
+    urdf_path = os.path.join(
+        get_package_share_directory("parol6_description"),
+        "urdf",
+        "parol6.urdf.xacro"
+    )
+
+    # MoveIt config builder
     moveit_config = (
         MoveItConfigsBuilder("parol6", package_name="parol6_moveit2_config")
-        .robot_description(file_path="config/parol6.urdf.xacro")
+        .robot_description(file_path=urdf_path)
         .robot_description_semantic(file_path="config/parol6.srdf")
         .trajectory_execution(file_path="config/moveit_controllers.yaml")
         .planning_pipelines(pipelines=["ompl"])
         .to_moveit_configs()
     )
+
+    # Use relative path for world file (assumes this file is in parol6_moveit2_config/launch/)
+    launch_file_dir = os.path.dirname(os.path.realpath(__file__))
+    project_root = os.path.abspath(os.path.join(launch_file_dir, "..", ".."))
+    world_file_path = os.path.join(project_root, "parol6_gazebo", "worlds", "table1.world")
 
     gazebo_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
@@ -24,9 +39,7 @@ def generate_launch_description():
             ])
         ]),
         launch_arguments={
-            'world': TextSubstitution(
-                text='/home/azif/projetcs/parol6/parol6_gazebo/worlds/table1.world'
-            ),
+            'world': TextSubstitution(text=world_file_path),
             'use_sim_time': 'True',
         }.items()
     )

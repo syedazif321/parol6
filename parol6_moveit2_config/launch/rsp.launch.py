@@ -11,8 +11,8 @@ def generate_launch_description():
         PathJoinSubstitution([FindExecutable(name="xacro")]),
         " ",
         PathJoinSubstitution([
-            FindPackageShare("parol6_moveit2_config"),
-            "config",
+            FindPackageShare("parol6_description"),
+            "urdf",
             "parol6.urdf.xacro"
         ])
     ])
