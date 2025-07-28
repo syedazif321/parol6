@@ -7,7 +7,7 @@
 <robot xmlns:xacro="http://wiki.ros.org/xacro"
       name="parol6">
 
-    <link name="base_link">
+  <link name="base_link">
       <inertial>
         <origin xyz="-0.0274562034602567 -0.00137265400595656 0.031237920982338" rpy="0 0 0" />
         <mass value="0.812661291810144" />
@@ -27,13 +27,17 @@
           <mesh filename="package://parol6_description/meshes/base_link.STL"/>
         </geometry>
       </collision>
-    </link>
-    <!-- <gazebo reference="base_link">
+  </link>
+  <!-- <gazebo reference="base_link>
       <material>Gazebo/Orange</material>
       <turnGravityOff>false</turnGravityOff>
-    </gazebo> -->
+  </gazebo> -->
 
-    <link name="L1">
+  <gazebo reference="base_link">
+      <material>Gazebo/Grey</material>
+  </gazebo>
+
+  <link name="L1">
       <inertial>
         <origin xyz="0.00524529891406311 0.0289722820784871 0.0992791429452917" rpy="0 0 0" />
         <mass value="0.644800830530233" />
@@ -52,17 +56,21 @@
           <mesh filename="package://parol6_description/meshes/L1.STL"/>
         </geometry>
       </collision>
-    </link>
+  </link>
 
-    <joint name="J1" type="revolute">
+  <gazebo reference="L1">
+      <material>Gazebo/Grey</material>
+  </gazebo>
+
+  <joint name="J1" type="revolute">
       <origin xyz="0 0 0" rpy="0 0 0" />
       <parent link="base_link" />
       <child link="L1" />
       <axis xyz="0 0 1" />
       <limit lower="-3.14" upper="3.14" effort="0" velocity="0" />
-    </joint>
+  </joint>
 
-    <link name="L2">
+  <link name="L2">
       <inertial>
         <origin xyz="-0.0094181617193695 -0.0783879603613605 0.0369429741417731" rpy="0 0 0" />
         <mass value="0.512334779399788" />
@@ -81,17 +89,21 @@
           <mesh filename="package://parol6_description/meshes/L2.STL"/>
         </geometry>
       </collision>
-    </link>
+  </link>
 
-    <joint name="J2" type="revolute">
+  <gazebo reference="L2">
+      <material>Gazebo/Grey</material>
+  </gazebo>
+
+  <joint name="J2" type="revolute">
       <origin xyz="0.0234207210610375 0 0.1105" rpy="-1.5707963267949 0 0" />
       <parent link="L1" />
       <child link="L2" />
       <axis xyz="0 0 1" />
       <limit lower="-1.57" upper="1.57" effort="0" velocity="0" />
-    </joint>
+  </joint>
 
-    <link name="L3">
+  <link name="L3">
       <inertial>
         <origin xyz="0.0155509885239593 -0.0191127686426613 -0.00153322577917236" rpy="0 0 0" />
         <mass value="0.550970997806044" />
@@ -110,17 +122,21 @@
           <mesh filename="package://parol6_description/meshes/L3.STL"/>
         </geometry>
       </collision>
-    </link>
+  </link>
 
-    <joint name="J3" type="revolute">
+  <gazebo reference="L3">
+      <material>Gazebo/Grey</material>
+  </gazebo>
+
+  <joint name="J3" type="revolute">
       <origin xyz="0 -0.18 0" rpy="3.1416 0 -1.5708" />
       <parent link="L2" />
       <child link="L3" />
       <axis xyz="0 0 -1" />
       <limit lower="-1.57" upper="1.57" effort="0" velocity="0" />
-    </joint>
+  </joint>
 
-    <link name="L4">
+  <link name="L4">
       <inertial>
         <origin xyz="0.000947028430634433 -0.008978947112462 -0.0924798659827059" rpy="0 0 0" />
         <mass value="0.39346362633915" />
@@ -138,121 +154,142 @@
            <mesh filename="package://parol6_description/meshes/L4.STL"/>
         </geometry>
       </collision>
-    </link>
+  </link>
 
-    <joint name="J4" type="revolute">
+  <gazebo reference="L4">
+      <material>Gazebo/Grey</material>
+  </gazebo>
+
+  <joint name="J4" type="revolute">
       <origin xyz="0.0435 0.0 0.0" rpy="1.5708 0 3.1415" />
       <parent link="L3" />
       <child link="L4" />
       <axis xyz="0 0 1" />
       <limit lower="-1.57" upper="1.57" effort="0" velocity="0" />
-    </joint>
+  </joint>
 
-    <link name="L5">
-    <inertial>
-      <origin xyz="6.7162171684676E-06 -0.00621420980825221 -0.000960871025916146" rpy="0 0 0" />
-      <mass value="0.185171777001718" />
-      <inertia
-        ixx="0.000109176748460021"
-        ixy="-1.27195013439061E-07"
-        ixz="8.4436049148633E-08"
-        iyy="8.41307588934268E-05"
-        iyz="-4.41596193640049E-07"
-        izz="0.000110629136236229" />
-    </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://parol6_description/meshes/L5.STL"/>
-      </geometry>
-    </visual>
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://parol6_description/meshes/L5.STL"/>
-      </geometry>
-    </collision>
+  <link name="L5">
+      <inertial>
+        <origin xyz="6.7162171684676E-06 -0.00621420980825221 -0.000960871025916146" rpy="0 0 0" />
+        <mass value="0.185171777001718" />
+        <inertia
+          ixx="0.000109176748460021"
+          ixy="-1.27195013439061E-07"
+          ixz="8.4436049148633E-08"
+          iyy="8.41307588934268E-05"
+          iyz="-4.41596193640049E-07"
+          izz="0.000110629136236229" />
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://parol6_description/meshes/L5.STL"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://parol6_description/meshes/L5.STL"/>
+        </geometry>
+      </collision>
   </link>
 
+  <gazebo reference="L5">
+      <material>Gazebo/Grey</material>
+  </gazebo>
+
   <joint name="J5" type="revolute">
-    <origin xyz="0 0 -0.17635" rpy="-1.5708 0 0" />
-    <parent link="L4" />
-    <child link="L5" />
-    <axis xyz="0 0 -1" />
-      <limit lower="-1.57" upper="1.57" effort="0" velocity="0" />
+      <origin xyz="0 0 -0.17635" rpy="-1.5708 0 0" />
+      <parent link="L4" />
+      <child link="L5" />
+      <axis xyz="0 0 -1" />
+        <limit lower="-1.57" upper="1.57" effort="0" velocity="0" />
   </joint>
 
   <link name="L6">
-    <inertial>
-      <origin xyz="0.00632955087228015 -0.000453856352095022 -0.0554441567386594" rpy="0 0 0" />
-      <mass value="0.0703261410665101" />
-      <inertia
-        ixx="1.40276237518287E-05"
-        ixy="3.15503246005279E-07"
-        ixz="-9.28469598788221E-07"
-        iyy="1.81406721166117E-05"
-        iyz="-9.43630009030796E-07"
-        izz="2.34608103291027E-05" />
-    </inertial>
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://parol6_description/meshes/vaccum_gripper_holder.stl"/>
-      </geometry>
-    </visual>
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="package://parol6_description/meshes/vaccum_gripper_holder.stl"/>
-      </geometry>
-    </collision>
+      <inertial>
+        <origin xyz="0.00632955087228015 -0.000453856352095022 -0.0554441567386594" rpy="0 0 0" />
+        <mass value="0.0703261410665101" />
+        <inertia
+          ixx="1.40276237518287E-05"
+          ixy="3.15503246005279E-07"
+          ixz="-9.28469598788221E-07"
+          iyy="1.81406721166117E-05"
+          iyz="-9.43630009030796E-07"
+          izz="2.34608103291027E-05" />
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://parol6_description/meshes/vaccum_gripper_holder.stl"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://parol6_description/meshes/vaccum_gripper_holder.stl"/>
+        </geometry>
+      </collision>
   </link>
 
+  <gazebo reference="L6">
+      <material>Gazebo/Orange</material>
+  </gazebo>
+
   <joint name="J6" type="continuous">
-    <origin xyz="0 0 0" rpy="1.5708 0 0" />
-    <parent link="L5" />
-    <child link="L6" />
-    <axis xyz="0 0 -1" />
-    <limit lower="0" upper="0" effort="0" velocity="0" />
+      <origin xyz="0 0 0" rpy="1.5708 0 0" />
+      <parent link="L5" />
+      <child link="L6" />
+      <axis xyz="0 0 -1" />
+      <limit lower="0" upper="0" effort="0" velocity="0" />
   </joint>
 
 
   <link name="suction_gripper">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <mesh filename="package://parol6_description/meshes/vaccum_gripper.stl"/>
-      </geometry>
-    </visual>
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <mesh filename="package://parol6_description/meshes/vaccum_gripper.stl"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="0.01"/>
-      <inertia
-        ixx="1e-6" ixy="0" ixz="0"
-        iyy="1e-6" iyz="0"
-        izz="1e-6"/>
-    </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://parol6_description/meshes/vaccum_gripper.stl"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://parol6_description/meshes/vaccum_gripper.stl"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.01"/>
+        <inertia
+          ixx="1e-6" ixy="0" ixz="0"
+          iyy="1e-6" iyz="0"
+          izz="1e-6"/>
+      </inertial>
   </link>
 
+  <gazebo reference="suction_gripper">
+      <material>Gazebo/Orange</material>
+  </gazebo>
+
+
   <joint name="J7" type="fixed">
-    <parent link="L6"/>
-    <child link="suction_gripper"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="L6"/>
+      <child link="suction_gripper"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
 
   <link name="tool0"/>
+  <gazebo reference="tool0">
+      <material>Gazebo/Yellow</material>
+  </gazebo>
+
 
   <joint name="tool0_fixed" type="fixed">
-    <parent link="suction_gripper"/>
-    <child link="tool0"/>
-    <origin xyz="0.083695 -0.000779 -0.060305" rpy="0 0 0"/>
+      <parent link="suction_gripper"/>
+      <child link="tool0"/>
+      <origin xyz="0.083695 -0.000779 -0.060305" rpy="0 0 0"/>
   </joint>
 
 

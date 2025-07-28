@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>parol6_gui</name>
+  <version>0.1.0</version>
+  <description>Qt GUI for controlling the Parol6 robot</description>
+
+  <maintainer email="azif@example.com">Mohammed Azif</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <exec_depend>qtbase5-dev</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

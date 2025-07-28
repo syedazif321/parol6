@@ -1642,7 +1642,7 @@
     </light>
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose>-1.68758 -2.85671 2.66067 0 0.865795 0.844169</pose>
+        <pose>0.289352 0.784932 1.70681 0 0.345794 -1.58784</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
@@ -1745,10 +1745,10 @@
       <pose>-0.788207 -1.11944 0 0 -0 0</pose>
     </model>
     <state world_name='default'>
-      <sim_time>198 674000000</sim_time>
-      <real_time>199 355603723</real_time>
-      <wall_time>1753359335 638059931</wall_time>
-      <iterations>198674</iterations>
+      <sim_time>343 703000000</sim_time>
+      <real_time>145 699904602</real_time>
+      <wall_time>1753694805 134601010</wall_time>
+      <iterations>145029</iterations>
       <model name='aws_robomaker_warehouse_Bucket_01_020'>
         <pose>0.433449 9.63171 0 0 0 -1.56316</pose>
         <scale>1 1 1</scale>
@@ -1830,7 +1830,7 @@
         </link>
       </model>
       <model name='aws_robomaker_warehouse_ClutteringC_01_029'>
-        <pose>5.38424 6.13715 0 0 -0 -3.13319</pose>
+        <pose>5.38424 6.13715 0 0 0 -3.13319</pose>
         <scale>1 1 1</scale>
         <link name='aws_robomaker_warehouse_ClutteringC_01::link'>
           <pose>5.38424 6.13715 0 0 -0 -3.13319</pose>
@@ -1840,7 +1840,7 @@
         </link>
       </model>
       <model name='aws_robomaker_warehouse_ClutteringC_01_030'>
-        <pose>3.236 6.13715 0 0 -0 -3.13319</pose>
+        <pose>3.236 6.13715 0 0 0 -3.13319</pose>
         <scale>1 1 1</scale>
         <link name='aws_robomaker_warehouse_ClutteringC_01::link'>
           <pose>3.236 6.13715 0 0 -0 -3.13319</pose>
@@ -1880,10 +1880,10 @@
         </link>
       </model>
       <model name='aws_robomaker_warehouse_GroundB_01_001'>
-        <pose>-0.266349 0.178527 -0.090092 0 -0 0</pose>
+        <pose>-0.264914 0.176654 -0.090092 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='aws_robomaker_warehouse_GroundB_01::link'>
-          <pose>-0.266349 0.178527 -0.090092 0 -0 0</pose>
+          <pose>-0.264914 0.176654 -0.090092 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -2000,10 +2000,10 @@
         </link>
       </model>
       <model name='cafe_table'>
-        <pose>-0.788207 -1.11944 0 0 -0 0</pose>
+        <pose>-0.944326 -1.09428 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose>-0.788207 -1.11944 0 0 -0 0</pose>
+          <pose>-0.944326 -1.09428 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
