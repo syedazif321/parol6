@@ -1,4 +1,5 @@
-
+planning_group: arm
+initial_servo_enable: true
 command_in_type: "unitless"
 scale:
  
@@ -13,10 +14,13 @@ command_out_type: trajectory_msgs/JointTrajectory
 publish_joint_positions: true
 publish_joint_velocities: true
 publish_joint_accelerations: false
+publish_joint_trajectory: true
+
 
 low_pass_filter_coeff: 2.0 
 
 move_group_name: arm  
+
 planning_frame: base_link 
 
 ee_frame_name: tool0 
