@@ -1,33 +1,64 @@
+#!/usr/bin/env python3
+
 from launch import LaunchDescription
-from launch_ros.actions import Node
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import PathJoinSubstitution, TextSubstitution
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
+from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
-from ament_index_python.packages import get_package_share_directory
 from moveit_configs_utils import MoveItConfigsBuilder
+from ament_index_python.packages import get_package_share_directory
 
 import os
+import xacro
+import yaml
+
+
+def load_yaml(package_name, file_path):
+    """Load YAML file from package."""
+    package_path = get_package_share_directory(package_name)
+    full_path = os.path.join(package_path, file_path)
+    try:
+        with open(full_path, 'r') as file:
+            return yaml.safe_load(file)
+    except EnvironmentError as e:
+        print(f"Error loading YAML: {e}")
+        return None
+
 
 def generate_launch_description():
-    # URDF path from package
-    urdf_path = os.path.join(
-        get_package_share_directory("parol6_description"),
-        "urdf",
-        "parol6.urdf.xacro"
+    use_sim = LaunchConfiguration('use_sim')
+    declare_use_sim = DeclareLaunchArgument(
+        'use_sim',
+        default_value='true',
+        description='Use simulation (Gazebo) clock if true'
     )
 
-    # MoveIt config builder
-    moveit_config = (
-        MoveItConfigsBuilder("parol6", package_name="parol6_moveit2_config")
-        .robot_description(file_path=urdf_path)
-        .robot_description_semantic(file_path="config/parol6.srdf")
-        .trajectory_execution(file_path="config/moveit_controllers.yaml")
-        .planning_pipelines(pipelines=["ompl"])
-        .to_moveit_configs()
-    )
+    pkg_share_dir = get_package_share_directory('parol6_moveit2_config')
+    description_share_dir = get_package_share_directory('parol6_description')
 
-    # World file
+    urdf_path = os.path.join(description_share_dir, "urdf", "parol6.urdf.xacro")
+    robot_description_config = xacro.process_file(urdf_path)
+    robot_description = {'robot_description': robot_description_config.toxml()}
+
+    srdf_path = os.path.join(pkg_share_dir, "config", "parol6.srdf")
+    with open(srdf_path, 'r') as f:
+        robot_description_semantic_config = f.read()
+    robot_description_semantic = {'robot_description_semantic': robot_description_semantic_config}
+
+    kinematics_yaml = load_yaml("parol6_moveit2_config", "config/kinematics.yaml")
+    if kinematics_yaml is None:
+        return LaunchDescription([])
+
+    joint_limits_yaml = load_yaml("parol6_moveit2_config", "config/joint_limits.yaml")
+    joint_limits = {'robot_description_planning': joint_limits_yaml} if joint_limits_yaml else {}
+
+    servo_yaml = load_yaml("parol6_moveit2_config", "config/moveit_servo.yaml")
+    if servo_yaml is None:
+        return LaunchDescription([])
+    servo_params = {'moveit_servo': servo_yaml}
+
+
     launch_file_dir = os.path.dirname(os.path.realpath(__file__))
     project_root = os.path.abspath(os.path.join(launch_file_dir, "..", ".."))
     world_file_path = os.path.join(project_root, "parol6_gazebo", "worlds", "table1.world")
@@ -39,8 +70,8 @@ def generate_launch_description():
             ])
         ]),
         launch_arguments={
-            'world': TextSubstitution(text=world_file_path),
-            'use_sim_time': 'True',
+            'world': world_file_path,
+            'use_sim_time': use_sim,
         }.items()
     )
 
@@ -49,7 +80,8 @@ def generate_launch_description():
             PathJoinSubstitution([
                 FindPackageShare("parol6_moveit2_config"), "launch", "rsp.launch.py"
             ])
-        ])
+        ]),
+        launch_arguments={'use_sim_time': use_sim}.items()
     )
 
     spawn_entity = Node(
@@ -64,7 +96,8 @@ def generate_launch_description():
             PathJoinSubstitution([
                 FindPackageShare("parol6_moveit2_config"), "launch", "spawn_controllers.launch.py"
             ])
-        ])
+        ]),
+        launch_arguments={'use_sim_time': use_sim}.items()
     )
 
     move_group_node = Node(
@@ -72,14 +105,15 @@ def generate_launch_description():
         executable="move_group",
         output="screen",
         parameters=[
-            moveit_config.robot_description,
-            moveit_config.robot_description_semantic,
-            moveit_config.robot_description_kinematics,
-            moveit_config.joint_limits,
-            moveit_config.planning_pipelines,
-            moveit_config.trajectory_execution,
-            {"use_sim_time": True}
-        ]
+            MoveItConfigsBuilder("parol6", package_name="parol6_moveit2_config")
+            .robot_description(file_path=urdf_path)
+            .robot_description_semantic(file_path=srdf_path)
+            .trajectory_execution(file_path=os.path.join(pkg_share_dir, "config", "moveit_controllers.yaml"))
+            .planning_pipelines(pipelines=["ompl"])
+            .to_moveit_configs()
+            .to_dict(),
+            {"use_sim_time": use_sim}
+        ],
     )
 
     rviz_node = Node(
@@ -93,18 +127,12 @@ def generate_launch_description():
             ])
         ],
         parameters=[
-            moveit_config.robot_description,
-            moveit_config.robot_description_semantic,
-            moveit_config.robot_description_kinematics,
-            moveit_config.joint_limits,
-            {"use_sim_time": True}
+            robot_description,
+            robot_description_semantic,
+            {"robot_description_kinematics": kinematics_yaml},
+            joint_limits,
+            {"use_sim_time": use_sim}
         ]
-    )
-
-    servo_params_path = os.path.join(
-        get_package_share_directory("parol6_moveit2_config"),
-        "config",
-        "moveit_servo.yaml"
     )
 
     servo_node = Node(
@@ -113,19 +141,26 @@ def generate_launch_description():
         name="servo_node",
         output="screen",
         parameters=[
-            moveit_config.robot_description,
-            moveit_config.robot_description_semantic,
-            servo_params_path,
-            {"use_sim_time": True}
-        ]
+            servo_params,
+            robot_description,
+            robot_description_semantic,
+            {"robot_description_kinematics": kinematics_yaml},
+            joint_limits,
+            {"use_sim_time": use_sim},
+        ],
+        remappings=[
+            ("~/joint_states", "/joint_states"),
+            ("~/robot_description", "/robot_description"),
+        ],
     )
 
     return LaunchDescription([
+        declare_use_sim,
         gazebo_launch,
         robot_state_pub,
         spawn_entity,
         spawn_controllers,
         move_group_node,
         rviz_node,
-        servo_node, 
+        servo_node,
     ])
