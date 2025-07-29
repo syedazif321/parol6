@@ -43,6 +43,8 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
+    QString kTargetFilePath;
+
     std::vector<double> current_joint_values;
     std::map<QString, std::vector<double>> saved_joint_targets;
     std::map<QString, QString> saved_pose_targets;
@@ -50,6 +52,8 @@ private:
     void updateJointLabels();
     void sendJogCommand(double x, double y, double z, double rx, double ry, double rz);
     void jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
+    void loadTargetsFromJson();
+    void saveTargetsToJson();
 
     // ROS 2 Node and communication
     rclcpp::Node::SharedPtr ros_node_;

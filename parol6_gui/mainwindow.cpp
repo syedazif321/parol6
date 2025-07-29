@@ -5,6 +5,14 @@
 #include <QTimer>
 #include <rclcpp/rclcpp.hpp>
 #include <QPushButton>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QDir>
+#include "ament_index_cpp/get_package_share_directory.hpp"
+
+
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -13,6 +21,13 @@ MainWindow::MainWindow(QWidget *parent)
       current_joint_values(6, 0.0)
 {
     ui->setupUi(this);
+
+    QString basePath = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/../../..");
+    kTargetFilePath = basePath + "/parol6/robot_data/Targets.json";
+
+    qDebug() << "Resolved target path:" << kTargetFilePath;
+
+    loadTargetsFromJson();
 
     connect(ui->btnShowJointValues, &QPushButton::clicked, this, &MainWindow::updateJointLabels);
     connect(ui->btnShowPoseValues, &QPushButton::clicked, this, &MainWindow::on_btnShowPoseValues_clicked);
@@ -23,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btnServoOff, &QPushButton::clicked, this, &MainWindow::on_btnServoOff_clicked);
 
     // Jog buttons connect to pressed/released signals
+
     auto jogButtons = {
         ui->btnJogXPlus, ui->btnJogXMinus, ui->btnJogYPlus, ui->btnJogYMinus,
         ui->btnJogZPlus, ui->btnJogZMinus, ui->btnJogRPlus, ui->btnJogRMinus,
@@ -132,6 +148,53 @@ void MainWindow::updateJointLabels() {
     ui->valueJoint6->setText(QString::number(current_joint_values[5], 'f', 2));
 }
 
+void MainWindow::loadTargetsFromJson() {
+    QFile file(kTargetFilePath);
+    if (!file.open(QIODevice::ReadOnly)) return;
+
+    QByteArray data = file.readAll();
+    file.close();
+
+    QJsonDocument doc = QJsonDocument::fromJson(data);
+    QJsonObject obj = doc.object();
+
+    for (const QString& name : obj.keys()) {
+        QJsonArray arr = obj[name].toArray();
+        std::vector<double> joints;
+        for (const auto& val : arr) {
+            joints.push_back(val.toDouble());
+        }
+        saved_joint_targets[name] = joints;
+        ui->comboBoxTargets->addItem(name);
+    }
+}
+
+void MainWindow::saveTargetsToJson() {
+    QJsonObject obj;
+    for (const auto& pair : saved_joint_targets) {
+        QJsonArray arr;
+        for (double val : pair.second) {
+            arr.append(val);
+        }
+        obj.insert(pair.first, arr);
+    }
+
+    QJsonDocument doc(obj);
+    QFile file(kTargetFilePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        qDebug() << "Failed to open file for writing:" << kTargetFilePath;
+        return;
+    }
+
+    file.write(doc.toJson(QJsonDocument::Indented));
+    file.close();
+    qDebug() << "Successfully wrote to file";
+
+    qDebug() << "Saving to file:" << kTargetFilePath;
+
+}
+
+
 void MainWindow::on_btnShowJointValues_clicked() {
     // TODO: implement joint display logic
 }
@@ -141,8 +204,15 @@ void MainWindow::on_btnShowPoseValues_clicked() {
 }
 
 void MainWindow::on_btnSaveJointTarget_clicked() {
-    // TODO: save current joint target
+    QString name = ui->lineEditTargetName->text();
+    if (!name.isEmpty()) {
+        saved_joint_targets[name] = current_joint_values;
+        ui->comboBoxTargets->addItem(name);
+        ui->lineEditTargetName->clear();
+        saveTargetsToJson();
+    }
 }
+
 
 void MainWindow::on_btnSavePoseTarget_clicked() {
     // TODO: save current pose target
