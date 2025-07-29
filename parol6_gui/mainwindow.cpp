@@ -11,6 +11,11 @@
 #include <QJsonArray>
 #include <QDir>
 #include "ament_index_cpp/get_package_share_directory.hpp"
+#include <trajectory_msgs/msg/joint_trajectory.hpp>
+#include <trajectory_msgs/msg/joint_trajectory_point.hpp>
+#include <control_msgs/action/follow_joint_trajectory.hpp>
+#include <rclcpp_action/rclcpp_action.hpp>
+
 
 
 
@@ -66,6 +71,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     servo_on_client_ = ros_node_->create_client<std_srvs::srv::Trigger>("/servo_node/start_servo");
     servo_off_client_ = ros_node_->create_client<std_srvs::srv::Trigger>("/servo_node/stop_servo");
+    trajectory_action_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(
+        ros_node_, "/arm_controller/follow_joint_trajectory");
+
 
     QTimer *rosTimer = new QTimer(this);
     connect(rosTimer, &QTimer::timeout, this, [this]() {
@@ -194,6 +202,38 @@ void MainWindow::saveTargetsToJson() {
 
 }
 
+void MainWindow::sendTrajectoryToTarget(const std::vector<double>& joint_positions)
+{
+    if (!trajectory_action_client_->wait_for_action_server(std::chrono::seconds(2))) {
+        RCLCPP_ERROR(ros_node_->get_logger(), "Trajectory action server not available.");
+        return;
+    }
+
+    FollowJointTrajectory::Goal goal;
+    goal.trajectory.joint_names = {
+        "J1", "J2", "J3", "J4", "J5", "J6"
+    };
+
+    trajectory_msgs::msg::JointTrajectoryPoint point;
+    point.positions = joint_positions;
+    point.time_from_start = rclcpp::Duration::from_seconds(2.0);
+
+    goal.trajectory.points.push_back(point);
+
+    auto goal_handle_future = trajectory_action_client_->async_send_goal(goal);
+
+    if (rclcpp::spin_until_future_complete(ros_node_, goal_handle_future) ==
+        rclcpp::FutureReturnCode::SUCCESS)
+    {
+        RCLCPP_INFO(ros_node_->get_logger(), "Trajectory goal sent successfully.");
+    }
+    else
+    {
+        RCLCPP_ERROR(ros_node_->get_logger(), "Failed to send trajectory goal.");
+    }
+}
+
+
 
 void MainWindow::on_btnShowJointValues_clicked() {
     // TODO: implement joint display logic
@@ -219,5 +259,11 @@ void MainWindow::on_btnSavePoseTarget_clicked() {
 }
 
 void MainWindow::on_btnGoToTarget_clicked() {
-    // TODO: send robot to selected target
+    QString name = ui->comboBoxTargets->currentText();
+    if (saved_joint_targets.contains(name)) {
+        sendTrajectoryToTarget(saved_joint_targets[name]);
+    } else {
+        QMessageBox::warning(this, "Invalid Target", "Selected target not found.");
+    }
 }
+

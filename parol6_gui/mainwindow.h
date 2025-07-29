@@ -15,6 +15,10 @@
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <std_srvs/srv/trigger.hpp>
+#include <control_msgs/action/follow_joint_trajectory.hpp>
+#include <rclcpp_action/rclcpp_action.hpp>
+
+using FollowJointTrajectory = control_msgs::action::FollowJointTrajectory;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -54,6 +58,7 @@ private:
     void jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
     void loadTargetsFromJson();
     void saveTargetsToJson();
+    void sendTrajectoryToTarget(const std::vector<double>& target_joints);
 
     // ROS 2 Node and communication
     rclcpp::Node::SharedPtr ros_node_;
@@ -61,6 +66,9 @@ private:
     rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr jog_publisher_;
     rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr servo_on_client_;
     rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr servo_off_client_;
+    rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SharedPtr trajectory_action_client_;
+
+    
 
 };
 

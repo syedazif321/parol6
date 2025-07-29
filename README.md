@@ -1,5 +1,8 @@
 # parol6
 export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/home/azif/projetcs/parol6/install/parol6_description/share
+export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/home/azif/projetcs/parol6/install/parol6_description/share/parol6_description
+
+
 ros2 topic pub -r 10 /servo_node/delta_twist_cmds geometry_msgs/TwistStamped -- \
 "header:
   stamp:
