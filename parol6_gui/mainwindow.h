@@ -1,15 +1,20 @@
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
 #include <QMainWindow>
 #include <QTimer>
+#include <QPushButton>
 #include <vector>
 #include <map>
 #include <memory>
+#include <mutex>
 
 // ROS 2 includes
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <std_srvs/srv/trigger.hpp>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -29,6 +34,12 @@ private slots:
     void on_btnSavePoseTarget_clicked();
     void on_btnGoToTarget_clicked();
 
+    void on_btnServoOn_clicked();
+    void on_btnServoOff_clicked();
+
+    void onJogButtonPressed();
+    void onJogButtonReleased();
+
 private:
     Ui::MainWindow *ui;
 
@@ -37,17 +48,16 @@ private:
     std::map<QString, QString> saved_pose_targets;
 
     void updateJointLabels();
+    void sendJogCommand(double x, double y, double z, double rx, double ry, double rz);
+    void jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
 
-    // ROS 2 Node and subscription
+    // ROS 2 Node and communication
     rclcpp::Node::SharedPtr ros_node_;
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
-    std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> executor_;
-    std::thread ros_spin_thread_;
-    std::mutex joint_state_mutex_;
+    rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr jog_publisher_;
+    rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr servo_on_client_;
+    rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr servo_off_client_;
 
-    void startROSNode();
-    void jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
-    void updateFromROS();
 };
 
 #endif // MAINWINDOW_H

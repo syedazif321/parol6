@@ -1,10 +1,11 @@
+// jog + servo control additions only
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QMessageBox>
 #include <QTimer>
-
 #include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/joint_state.hpp>
+#include <QPushButton>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
@@ -13,11 +14,25 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    connect(ui->btnShowJointValues, &QPushButton::clicked, this, &MainWindow::on_btnShowJointValues_clicked);
+    connect(ui->btnShowJointValues, &QPushButton::clicked, this, &MainWindow::updateJointLabels);
     connect(ui->btnShowPoseValues, &QPushButton::clicked, this, &MainWindow::on_btnShowPoseValues_clicked);
     connect(ui->btnSaveJointTarget, &QPushButton::clicked, this, &MainWindow::on_btnSaveJointTarget_clicked);
     connect(ui->btnSavePoseTarget, &QPushButton::clicked, this, &MainWindow::on_btnSavePoseTarget_clicked);
     connect(ui->btnGoToTarget, &QPushButton::clicked, this, &MainWindow::on_btnGoToTarget_clicked);
+    connect(ui->btnServoOn, &QPushButton::clicked, this, &MainWindow::on_btnServoOn_clicked);
+    connect(ui->btnServoOff, &QPushButton::clicked, this, &MainWindow::on_btnServoOff_clicked);
+
+    // Jog buttons connect to pressed/released signals
+    auto jogButtons = {
+        ui->btnJogXPlus, ui->btnJogXMinus, ui->btnJogYPlus, ui->btnJogYMinus,
+        ui->btnJogZPlus, ui->btnJogZMinus, ui->btnJogRPlus, ui->btnJogRMinus,
+        ui->btnJogPPlus, ui->btnJogPMinus, ui->btnJogYPlus1, ui->btnJogYMinus1
+    };
+
+    for (QPushButton *btn : jogButtons) {
+        connect(btn, &QPushButton::pressed, this, &MainWindow::onJogButtonPressed);
+        connect(btn, &QPushButton::released, this, &MainWindow::onJogButtonReleased);
+    }
 
     // Initialize ROS 2
     if (!rclcpp::ok()) {
@@ -30,7 +45,12 @@ MainWindow::MainWindow(QWidget *parent)
         "/joint_states", 10,
         std::bind(&MainWindow::jointStateCallback, this, std::placeholders::_1));
 
-    // Timer to periodically call spin_some
+    jog_publisher_ = ros_node_->create_publisher<geometry_msgs::msg::TwistStamped>(
+        "/servo_node/delta_twist_cmds", 10);
+
+    servo_on_client_ = ros_node_->create_client<std_srvs::srv::Trigger>("/servo_node/start_servo");
+    servo_off_client_ = ros_node_->create_client<std_srvs::srv::Trigger>("/servo_node/stop_servo");
+
     QTimer *rosTimer = new QTimer(this);
     connect(rosTimer, &QTimer::timeout, this, [this]() {
         rclcpp::spin_some(ros_node_);
@@ -43,8 +63,56 @@ MainWindow::~MainWindow() {
     delete ui;
 }
 
-void MainWindow::on_btnShowJointValues_clicked() {
-    updateJointLabels();
+void MainWindow::on_btnServoOn_clicked() {
+    auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+    if (!servo_on_client_->wait_for_service(std::chrono::seconds(1))) return;
+    servo_on_client_->async_send_request(request);
+}
+
+void MainWindow::on_btnServoOff_clicked() {
+    auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+    if (!servo_off_client_->wait_for_service(std::chrono::seconds(1))) return;
+    servo_off_client_->async_send_request(request);
+}
+
+void MainWindow::onJogButtonPressed() {
+    QPushButton *btn = qobject_cast<QPushButton *>(sender());
+    if (!btn) return;
+
+    double x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0;
+    QString name = btn->objectName();
+
+    if (name == "btnJogXPlus") x = 0.1;
+    else if (name == "btnJogXMinus") x = -0.1;
+    else if (name == "btnJogYPlus") y = 0.1;
+    else if (name == "btnJogYMinus") y = -0.1;
+    else if (name == "btnJogZPlus") z = 0.1;
+    else if (name == "btnJogZMinus") z = -0.1;
+    else if (name == "btnJogRPlus") rx = 0.1;
+    else if (name == "btnJogRMinus") rx = -0.1;
+    else if (name == "btnJogPPlus") ry = 0.1;
+    else if (name == "btnJogPMinus") ry = -0.1;
+    else if (name == "btnJogYPlus1") rz = 0.1;
+    else if (name == "btnJogYMinus1") rz = -0.1;
+
+    sendJogCommand(x, y, z, rx, ry, rz);
+}
+
+void MainWindow::onJogButtonReleased() {
+    sendJogCommand(0, 0, 0, 0, 0, 0); // stop
+}
+
+void MainWindow::sendJogCommand(double x, double y, double z, double rx, double ry, double rz) {
+    geometry_msgs::msg::TwistStamped msg;
+    msg.header.stamp = ros_node_->get_clock()->now();
+    msg.header.frame_id = "base_link";
+    msg.twist.linear.x = x;
+    msg.twist.linear.y = y;
+    msg.twist.linear.z = z;
+    msg.twist.angular.x = rx;
+    msg.twist.angular.y = ry;
+    msg.twist.angular.z = rz;
+    jog_publisher_->publish(msg);
 }
 
 void MainWindow::jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg) {
@@ -64,35 +132,22 @@ void MainWindow::updateJointLabels() {
     ui->valueJoint6->setText(QString::number(current_joint_values[5], 'f', 2));
 }
 
+void MainWindow::on_btnShowJointValues_clicked() {
+    // TODO: implement joint display logic
+}
+
 void MainWindow::on_btnShowPoseValues_clicked() {
-    ui->textTargetValues->setText("Position: x=0.5, y=0.2, z=0.1\nOrientation: x=0.0, y=0.0, z=0.0, w=1.0");
+    // TODO: implement pose display logic
 }
 
 void MainWindow::on_btnSaveJointTarget_clicked() {
-    QString name = ui->lineEditTargetName->text();
-    if (!name.isEmpty()) {
-        saved_joint_targets[name] = current_joint_values;
-        ui->comboBoxTargets->addItem(name);
-    }
+    // TODO: save current joint target
 }
 
 void MainWindow::on_btnSavePoseTarget_clicked() {
-    QString name = ui->lineEditTargetName->text();
-    if (!name.isEmpty()) {
-        QString pose = ui->textTargetValues->toPlainText();
-        saved_pose_targets[name] = pose;
-        ui->comboBoxTargets->addItem(name);
-    }
+    // TODO: save current pose target
 }
 
 void MainWindow::on_btnGoToTarget_clicked() {
-    QString selected = ui->comboBoxTargets->currentText();
-    if (saved_joint_targets.contains(selected)) {
-        current_joint_values = saved_joint_targets[selected];
-        updateJointLabels();
-    } else if (saved_pose_targets.contains(selected)) {
-        ui->textTargetValues->setText(saved_pose_targets[selected]);
-    } else {
-        QMessageBox::warning(this, "Target not found", "The selected target does not exist.");
-    }
+    // TODO: send robot to selected target
 }

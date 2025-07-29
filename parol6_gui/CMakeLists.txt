@@ -15,12 +15,12 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 
 # Qt
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 
-# Source files
 set(PROJECT_SOURCES
     main.cpp
     mainwindow.cpp
@@ -28,23 +28,22 @@ set(PROJECT_SOURCES
     mainwindow.ui
 )
 
-# Executable
 add_executable(${PROJECT_NAME}
     ${PROJECT_SOURCES}
 )
 
-# Link Qt and ROS
 target_link_libraries(${PROJECT_NAME}
     Qt${QT_VERSION_MAJOR}::Widgets
 )
 
+# Declare ROS 2 dependencies for this target
 ament_target_dependencies(${PROJECT_NAME}
     rclcpp
     sensor_msgs
     geometry_msgs
+    std_srvs
 )
 
-# Install the binary
 install(TARGETS ${PROJECT_NAME}
     DESTINATION lib/${PROJECT_NAME}
 )
