@@ -24,7 +24,7 @@ public:
   double belt_velocity_{0.0};
   double max_velocity_{1.0};
   double power_{0.0};
-  double limit_{1.0};  // SDF upper limit
+  double limit_{1.0};
 
   bool move_active_{false};
   double target_position_{0.0};
@@ -71,20 +71,28 @@ void ROS2ConveyorBeltPlugin::Load(gazebo::physics::ModelPtr _model, sdf::Element
   impl_->update_ns_ = static_cast<int>((1.0 / publish_rate) * 1e9);
   impl_->limit_ = impl_->belt_joint_->UpperLimit();
 
-  impl_->status_pub_ = impl_->ros_node_->create_publisher<conveyorbelt_msgs::msg::ConveyorBeltState>("CONVEYORSTATE", 10);
+  //  Dynamic namespaced topic/service names
+  const std::string ns = impl_->ros_node_->get_namespace();
+  std::string topic_name = ns + "/CONVEYORSTATE";
+  std::string power_srv = ns + "/CONVEYORPOWER";
+  std::string move_srv = ns + "/MoveDistance";
+
+  impl_->status_pub_ = impl_->ros_node_->create_publisher<conveyorbelt_msgs::msg::ConveyorBeltState>(topic_name, 10);
 
   impl_->enable_service_ = impl_->ros_node_->create_service<conveyorbelt_msgs::srv::ConveyorBeltControl>(
-    "CONVEYORPOWER", std::bind(&ROS2ConveyorBeltPluginPrivate::SetConveyorPower, impl_.get(), std::placeholders::_1, std::placeholders::_2));
+    power_srv,
+    std::bind(&ROS2ConveyorBeltPluginPrivate::SetConveyorPower, impl_.get(), std::placeholders::_1, std::placeholders::_2));
 
   impl_->move_service_ = impl_->ros_node_->create_service<conveyorbelt_msgs::srv::MoveDistance>(
-    "MoveDistance", std::bind(&ROS2ConveyorBeltPluginPrivate::MoveDistance, impl_.get(), std::placeholders::_1, std::placeholders::_2));
+    move_srv,
+    std::bind(&ROS2ConveyorBeltPluginPrivate::MoveDistance, impl_.get(), std::placeholders::_1, std::placeholders::_2));
 
   impl_->last_publish_time_ = impl_->ros_node_->get_clock()->now();
 
   impl_->update_connection_ = gazebo::event::Events::ConnectWorldUpdateBegin(
     std::bind(&ROS2ConveyorBeltPluginPrivate::OnUpdate, impl_.get()));
 
-  RCLCPP_INFO(impl_->ros_node_->get_logger(), "ROS2 Conveyor Belt plugin loaded with limit %.3f", impl_->limit_);
+  RCLCPP_INFO(impl_->ros_node_->get_logger(), " Conveyor plugin loaded in namespace [%s]", ns.c_str());
 }
 
 void ROS2ConveyorBeltPluginPrivate::OnUpdate()
@@ -94,7 +102,7 @@ void ROS2ConveyorBeltPluginPrivate::OnUpdate()
   if (move_active_) {
     if (std::abs(current_position - target_position_) < 0.0005) {
       belt_joint_->SetVelocity(0, 0.0);
-      belt_joint_->SetPosition(0, 0.0);  // Reset joint after move
+      belt_joint_->SetPosition(0, 0.0);
       move_active_ = false;
       RCLCPP_INFO(ros_node_->get_logger(), "Target distance reached. Joint reset to 0.0");
     } else {
@@ -119,7 +127,7 @@ void ROS2ConveyorBeltPluginPrivate::SetConveyorPower(
   if (req->power >= 0 && req->power <= 100) {
     power_ = req->power;
     belt_velocity_ = max_velocity_ * (power_ / 100.0);
-    move_active_ = false;  // cancel distance mode if active
+    move_active_ = false;
     res->success = true;
   } else {
     RCLCPP_WARN(ros_node_->get_logger(), "Invalid power value %.2f", req->power);
@@ -145,13 +153,13 @@ void ROS2ConveyorBeltPluginPrivate::MoveDistance(
     return;
   }
 
-  move_velocity_ = 0.5 * max_velocity_;  // Hardcoded 50% speed
+  move_velocity_ = 0.5 * max_velocity_;
   move_active_ = true;
   belt_velocity_ = 0.0;
 
   res->success = true;
 
-  RCLCPP_INFO(ros_node_->get_logger(), "MoveDistance: %.3f -> Target: %.4f with speed %.2f", req->distance, target_position_, move_velocity_);
+  RCLCPP_INFO(ros_node_->get_logger(), "MoveDistance: %.3f → Target: %.4f Speed: %.2f", req->distance, target_position_, move_velocity_);
 }
 
 void ROS2ConveyorBeltPluginPrivate::PublishStatus()
