@@ -2082,7 +2082,7 @@
         <collision name='belt_collision'>
           <geometry>
             <box>
-              <size>0.425 1.2 1e-05</size>
+              <size>0.425 0.5 1e-05</size>
             </box>
           </geometry>
           <surface>
@@ -2259,7 +2259,7 @@
       </plugin>
       <pose>-1.464024 -0.784193 0.034225 0 -0 1.552516</pose>
     </model>
-    
+
     <model name='conveyor_belt3'>
       <static>0</static>
       <self_collide>0</self_collide>
