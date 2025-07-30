@@ -1,14 +1,14 @@
-<sdf version="1.4">
+<?xml version="1.0" ?>
+<sdf version="1.6">
   <model name="conveyor_belt">
-    <static>false</static> <!-- So the whole model can move -->
+    <static>false</static>
+    <self_collide>false</self_collide>
 
-    <!-- Fixed Base Link (Now with Mass and Inertia) -->
+    <!-- Base Link (fixed part of conveyor) -->
     <link name="belt_visual">
-      <self_collide>0</self_collide>
       <pose>0 0 0 0 0 0</pose>
-
       <inertial>
-        <mass>500.0</mass> <!-- Heavy base to resist motion -->
+        <mass>500.0</mass>
         <inertia>
           <ixx>100.0</ixx>
           <iyy>100.0</iyy>
@@ -18,20 +18,18 @@
           <iyz>0.0</iyz>
         </inertia>
       </inertial>
-
       <visual name="visual">
         <geometry>
           <mesh>
-            <scale>1.5 1.5 1.5</scale>
+            <scale>1.0 1.0 1.0</scale> <!-- Rescaled to normal size -->
             <uri>model://conveyor_belt/meshes/conveyor_belt.dae</uri>
           </mesh>
         </geometry>
       </visual>
-
       <collision name="collision">
         <geometry>
           <mesh>
-            <scale>1.5 1.5 1.5</scale>
+            <scale>1.0 1.0 1.0</scale> <!-- Rescaled -->
             <uri>model://conveyor_belt/meshes/conveyor_belt.dae</uri>
           </mesh>
         </geometry>
@@ -45,9 +43,7 @@
 
     <!-- Moving Belt Link -->
     <link name="belt_moving">
-      <pose>0 0 1.12 0 0 0</pose> <!-- z = 0.741 * 1.5 + some gap -->
-      <self_collide>0</self_collide>
-
+      <pose>0 0 0.741 0 0 0</pose> <!-- ✅ matches the Z of the original base + gap -->
       <inertial>
         <mass>150.0</mass>
         <inertia>
@@ -59,11 +55,10 @@
           <iyz>0.0</iyz>
         </inertia>
       </inertial>
-
       <collision name="belt_collision">
         <geometry>
           <box>
-            <size>0.6375 1.8 0.000015</size>
+            <size>0.425 1.2 0.00001</size> <!-- Original unscaled size -->
           </box>
         </geometry>
         <surface>
@@ -77,14 +72,16 @@
             </ode>
             <torsional>
               <coefficient>1000.0</coefficient>
-              <patch_radius>0.15</patch_radius>
+              <patch_radius>0.10</patch_radius> <!-- Adjusted patch radius -->
             </torsional>
           </friction>
         </surface>
       </collision>
     </link>
 
+    <!-- Prismatic Joint -->
     <joint name="belt_joint" type="prismatic">
+      <pose>0 0 0.741 0 0 0</pose> <!-- Align joint with moving belt Z -->
       <parent>belt_visual</parent>
       <child>belt_moving</child>
       <axis>
@@ -93,11 +90,14 @@
           <lower>0.0</lower>
           <upper>0.015</upper>
         </limit>
+        <dynamics>
+          <damping>0.01</damping>
+        </dynamics>
       </axis>
       <disable_collisions>1</disable_collisions>
     </joint>
 
-    <!-- ROS2 Conveyor Belt Plugin -->
+    <!-- ROS 2 Conveyor Plugin -->
     <plugin name="ros2_conveyorbelt_plugin" filename="libros2_conveyorbelt_plugin.so">
       <ros>
         <namespace></namespace>
