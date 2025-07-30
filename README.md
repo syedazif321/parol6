@@ -24,3 +24,6 @@ twist:
 ros2 service call /servo_node/start_servo std_srvs/srv/Trigger
 ros2 service call /servo_node/stop_servo std_srvs/srv/Trigger
 
+ros2 service call /CONVEYORPOWER conveyorbelt_msgs/srv/ConveyorBeltControl power:\ 05.0\ 
+
+

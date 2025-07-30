@@ -45,6 +45,7 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ConveyorBeltState.msg"
   "srv/ConveyorBeltControl.srv"
+  "srv/MoveDistance.srv"
 )
 
 ament_package()
