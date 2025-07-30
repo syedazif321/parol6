@@ -1,86 +1,103 @@
 <sdf version="1.4">
   <model name="conveyor_belt">
+    <static>false</static> <!-- So the whole model can move -->
 
-    <!-- Fixed Base -->
-    <model name="conveyorbelt_fixed">
-      <static>1</static>
+    <!-- Fixed Base Link (Now with Mass and Inertia) -->
+    <link name="belt_visual">
+      <self_collide>0</self_collide>
+      <pose>0 0 0 0 0 0</pose>
 
-      <link name="belt_visual">
-        <visual name="visual">
-          <geometry>
-            <mesh>
-              <scale>1.5 1.5 1.5</scale>
-              <uri>model://conveyor_belt/meshes/conveyor_belt.dae</uri>
-            </mesh>
-          </geometry>
-        </visual>
+      <inertial>
+        <mass>500.0</mass> <!-- Heavy base to resist motion -->
+        <inertia>
+          <ixx>100.0</ixx>
+          <iyy>100.0</iyy>
+          <izz>100.0</izz>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyz>0.0</iyz>
+        </inertia>
+      </inertial>
 
-        <collision name="collision">
-          <geometry>
-            <mesh>
-              <scale>1.5 1.5 1.5</scale>
-              <uri>model://conveyor_belt/meshes/conveyor_belt.dae</uri>
-            </mesh>
-          </geometry>
-        </collision>
-      </link>
-    </model>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <scale>1.5 1.5 1.5</scale>
+            <uri>model://conveyor_belt/meshes/conveyor_belt.dae</uri>
+          </mesh>
+        </geometry>
+      </visual>
 
-    <!-- Moving Belt -->
-    <model name="conveyorbelt_moving">
-      <static>false</static>
-      <allow_auto_disable>0</allow_auto_disable>
-      <pose>0 0 1.1115 0 0 0</pose> <!-- z = 0.741 * 1.5 -->
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <scale>1.5 1.5 1.5</scale>
+            <uri>model://conveyor_belt/meshes/conveyor_belt.dae</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <collide_bitmask>0x01</collide_bitmask>
+          </contact>
+        </surface>
+      </collision>
+    </link>
 
-      <link name="belt_moving">
-        <inertial>
-          <mass>150.0</mass> <!-- Increased mass -->
-          <inertia>
-            <ixx>0.0</ixx>
-            <ixy>0.0</ixy>
-            <ixz>0.0</ixz>
-            <iyy>0.0</iyy>
-            <iyz>0.0</iyz>
-            <izz>0.0</izz>
-          </inertia>
-        </inertial>
+    <!-- Moving Belt Link -->
+    <link name="belt_moving">
+      <pose>0 0 1.12 0 0 0</pose> <!-- z = 0.741 * 1.5 + some gap -->
+      <self_collide>0</self_collide>
 
-        <collision name="belt_collision">
-          <geometry>
-            <box>
-              <size>0.6375 1.8 0.000015</size> <!-- 1.5x original 0.425 x 1.2 x 0.00001 -->
-            </box>
-          </geometry>
-          <surface>
-            <friction>
-              <ode>
-                <mu>100.0</mu>
-                <mu2>100.0</mu2>
-              </ode>
-              <torsional>
-                <coefficient>1000.0</coefficient>
-                <patch_radius>0.15</patch_radius> <!-- 1.5x -->
-              </torsional>
-            </friction>
-          </surface>
-        </collision>
-      </link>
-    </model>
+      <inertial>
+        <mass>150.0</mass>
+        <inertia>
+          <ixx>10.0</ixx>
+          <iyy>10.0</iyy>
+          <izz>10.0</izz>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyz>0.0</iyz>
+        </inertia>
+      </inertial>
 
-    <!-- Joint -->
+      <collision name="belt_collision">
+        <geometry>
+          <box>
+            <size>0.6375 1.8 0.000015</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <collide_bitmask>0x02</collide_bitmask>
+          </contact>
+          <friction>
+            <ode>
+              <mu>100.0</mu>
+              <mu2>100.0</mu2>
+            </ode>
+            <torsional>
+              <coefficient>1000.0</coefficient>
+              <patch_radius>0.15</patch_radius>
+            </torsional>
+          </friction>
+        </surface>
+      </collision>
+    </link>
+
     <joint name="belt_joint" type="prismatic">
-      <parent>conveyorbelt_fixed::belt_visual</parent>
-      <child>conveyorbelt_moving::belt_moving</child>
+      <parent>belt_visual</parent>
+      <child>belt_moving</child>
       <axis>
         <xyz>0 1 0</xyz>
         <limit>
           <lower>0.0</lower>
-          <upper>0.015</upper> <!-- 1.5x movement -->
+          <upper>0.015</upper>
         </limit>
       </axis>
+      <disable_collisions>1</disable_collisions>
     </joint>
 
-    <!-- Plugin -->
+    <!-- ROS2 Conveyor Belt Plugin -->
     <plugin name="ros2_conveyorbelt_plugin" filename="libros2_conveyorbelt_plugin.so">
       <ros>
         <namespace></namespace>
@@ -91,4 +108,3 @@
 
   </model>
 </sdf>
-
