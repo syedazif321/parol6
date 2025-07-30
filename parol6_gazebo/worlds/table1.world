@@ -1642,7 +1642,7 @@
     </light>
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose>0.289352 0.784932 1.70681 0 0.345794 -1.58784</pose>
+        <pose>0.635831 -1.39579 4.35057 0 1.3858 3.14015</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
@@ -1735,6 +1735,7 @@
           <geometry>
             <mesh>
               <uri>model://cafe_table/meshes/cafe_table.dae</uri>
+              <scale>0.5 0.5 1</scale>
             </mesh>
           </geometry>
         </visual>
@@ -1745,10 +1746,10 @@
       <pose>-0.788207 -1.11944 0 0 -0 0</pose>
     </model>
     <state world_name='default'>
-      <sim_time>343 703000000</sim_time>
-      <real_time>145 699904602</real_time>
-      <wall_time>1753694805 134601010</wall_time>
-      <iterations>145029</iterations>
+      <sim_time>714 630000000</sim_time>
+      <real_time>168 596962762</real_time>
+      <wall_time>1753873560 254268811</wall_time>
+      <iterations>160575</iterations>
       <model name='aws_robomaker_warehouse_Bucket_01_020'>
         <pose>0.433449 9.63171 0 0 0 -1.56316</pose>
         <scale>1 1 1</scale>
@@ -2000,10 +2001,10 @@
         </link>
       </model>
       <model name='cafe_table'>
-        <pose>-0.944326 -1.09428 0 0 -0 0</pose>
-        <scale>1 1 1</scale>
+        <pose>-0.610748 -1.10619 0 0 -0 0</pose>
+        <scale>0.5 0.5 1</scale>
         <link name='link'>
-          <pose>-0.944326 -1.09428 0 0 -0 0</pose>
+          <pose>-0.610748 -1.10619 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -2013,5 +2014,539 @@
         <pose>0 0 9 0 -0 0</pose>
       </light>
     </state>
+    <model name='conveyor_belt2'>
+      <static>0</static>
+      <self_collide>0</self_collide>
+      <link name='belt_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <mass>500</mass>
+          <inertia>
+            <ixx>100</ixx>
+            <iyy>100</iyy>
+            <izz>100</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+          <pose>0 0 0 0 -0 0</pose>
+        </inertial>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://conveyor_belt/meshes/conveyor_belt.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://conveyor_belt/meshes/conveyor_belt.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <contact>
+              <collide_bitmask>1</collide_bitmask>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <link name='belt_moving'>
+        <pose>0 0 0.741 0 -0 0</pose>
+        <inertial>
+          <mass>150</mass>
+          <inertia>
+            <ixx>10</ixx>
+            <iyy>10</iyy>
+            <izz>10</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+          <pose>0 0 0 0 -0 0</pose>
+        </inertial>
+        <collision name='belt_collision'>
+          <geometry>
+            <box>
+              <size>0.425 1.2 1e-05</size>
+            </box>
+          </geometry>
+          <surface>
+            <contact>
+              <collide_bitmask>2</collide_bitmask>
+              <ode/>
+            </contact>
+            <friction>
+              <ode>
+                <mu>100</mu>
+                <mu2>100</mu2>
+              </ode>
+              <torsional>
+                <coefficient>1000</coefficient>
+                <patch_radius>0.1</patch_radius>
+                <ode/>
+              </torsional>
+            </friction>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='belt_joint' type='prismatic'>
+        <pose>0 0 0.741 0 -0 0</pose>
+        <parent>belt_visual</parent>
+        <child>belt_moving</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>1</upper>
+          </limit>
+          <dynamics>
+            <damping>0.01</damping>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+        <disable_collisions>1</disable_collisions>
+      </joint>
+      <plugin name='ros2_conveyorbelt_plugin_2' filename='libros2_conveyorbelt_plugin.so'>
+        <ros>
+          <namespace>/conveyor2</namespace>
+        </ros>
+        <max_velocity>1.0</max_velocity>
+        <publish_rate>1000</publish_rate>
+      </plugin>
+      <pose>0.236052 -1.105317 0.03422 0 -0 -1.569596</pose>
+    </model>
+
+    <model name='conveyor_belt1'>
+      <static>0</static>
+      <self_collide>0</self_collide>
+      <link name='belt_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <mass>500</mass>
+          <inertia>
+            <ixx>100</ixx>
+            <iyy>100</iyy>
+            <izz>100</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+          <pose>0 0 0 0 -0 0</pose>
+        </inertial>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://conveyor_belt/meshes/conveyor_belt.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://conveyor_belt/meshes/conveyor_belt.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <contact>
+              <collide_bitmask>1</collide_bitmask>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <link name='belt_moving'>
+        <pose>0 0 0.741 0 -0 0</pose>
+        <inertial>
+          <mass>150</mass>
+          <inertia>
+            <ixx>10</ixx>
+            <iyy>10</iyy>
+            <izz>10</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+          <pose>0 0 0 0 -0 0</pose>
+        </inertial>
+        <collision name='belt_collision'>
+          <geometry>
+            <box>
+              <size>0.425 1.2 1e-05</size>
+            </box>
+          </geometry>
+          <surface>
+            <contact>
+              <collide_bitmask>2</collide_bitmask>
+              <ode/>
+            </contact>
+            <friction>
+              <ode>
+                <mu>100</mu>
+                <mu2>100</mu2>
+              </ode>
+              <torsional>
+                <coefficient>1000</coefficient>
+                <patch_radius>0.1</patch_radius>
+                <ode/>
+              </torsional>
+            </friction>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='belt_joint' type='prismatic'>
+        <pose>0 0 0.741 0 -0 0</pose>
+        <parent>belt_visual</parent>
+        <child>belt_moving</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>1</upper>
+          </limit>
+          <dynamics>
+            <damping>0.01</damping>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+        <disable_collisions>1</disable_collisions>
+      </joint>
+      <plugin name='ros2_conveyorbelt_plugin_1' filename='libros2_conveyorbelt_plugin.so'>
+        <ros>
+          <namespace>/conveyor1</namespace>
+        </ros>
+        <max_velocity>1.0</max_velocity>
+        <publish_rate>1000</publish_rate>
+      </plugin>
+      <pose>-1.464024 -0.854193 0.034225 0 -0 1.552516</pose>
+    </model>
+    <model name='conveyor_belt3'>
+      <static>0</static>
+      <self_collide>0</self_collide>
+      <link name='belt_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <mass>500</mass>
+          <inertia>
+            <ixx>100</ixx>
+            <iyy>100</iyy>
+            <izz>100</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+          <pose>0 0 0 0 -0 0</pose>
+        </inertial>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://conveyor_belt/meshes/conveyor_belt.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://conveyor_belt/meshes/conveyor_belt.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <contact>
+              <collide_bitmask>1</collide_bitmask>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <link name='belt_moving'>
+        <pose>0 0 0.741 0 -0 0</pose>
+        <inertial>
+          <mass>150</mass>
+          <inertia>
+            <ixx>10</ixx>
+            <iyy>10</iyy>
+            <izz>10</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+          <pose>0 0 0 0 -0 0</pose>
+        </inertial>
+        <collision name='belt_collision'>
+          <geometry>
+            <box>
+              <size>0.425 1.2 1e-05</size>
+            </box>
+          </geometry>
+          <surface>
+            <contact>
+              <collide_bitmask>2</collide_bitmask>
+              <ode/>
+            </contact>
+            <friction>
+              <ode>
+                <mu>100</mu>
+                <mu2>100</mu2>
+              </ode>
+              <torsional>
+                <coefficient>1000</coefficient>
+                <patch_radius>0.1</patch_radius>
+                <ode/>
+              </torsional>
+            </friction>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='belt_joint' type='prismatic'>
+        <pose>0 0 0.741 0 -0 0</pose>
+        <parent>belt_visual</parent>
+        <child>belt_moving</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>1</upper>
+          </limit>
+          <dynamics>
+            <damping>0.01</damping>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+        <disable_collisions>1</disable_collisions>
+      </joint>
+      <plugin name='ros2_conveyorbelt_plugin_3' filename='libros2_conveyorbelt_plugin.so'>
+        <ros>
+          <namespace>/conveyor3</namespace>
+        </ros>
+        <max_velocity>1.0</max_velocity>
+        <publish_rate>1000</publish_rate>
+      </plugin>
+      <pose>-1.478598 -1.346970 0.034224 0 -0 -1.590078</pose>
+    </model>
+
+    <!-- <model name='conveyor_belt'>
+      <static>0</static>
+      <self_collide>0</self_collide>
+      <link name='belt_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <mass>500</mass>
+          <inertia>
+            <ixx>100</ixx>
+            <iyy>100</iyy>
+            <izz>100</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+          <pose>0 0 0 0 -0 0</pose>
+        </inertial>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://conveyor_belt/meshes/conveyor_belt.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>model://conveyor_belt/meshes/conveyor_belt.dae</uri>
+            </mesh>
+          </geometry>
+          <surface>
+            <contact>
+              <collide_bitmask>1</collide_bitmask>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <link name='belt_moving'>
+        <pose>0 0 0.741 0 -0 0</pose>
+        <inertial>
+          <mass>150</mass>
+          <inertia>
+            <ixx>10</ixx>
+            <iyy>10</iyy>
+            <izz>10</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
+          </inertia>
+          <pose>0 0 0 0 -0 0</pose>
+        </inertial>
+        <collision name='belt_collision'>
+          <geometry>
+            <box>
+              <size>0.425 1.2 1e-05</size>
+            </box>
+          </geometry>
+          <surface>
+            <contact>
+              <collide_bitmask>2</collide_bitmask>
+              <ode/>
+            </contact>
+            <friction>
+              <ode>
+                <mu>100</mu>
+                <mu2>100</mu2>
+              </ode>
+              <torsional>
+                <coefficient>1000</coefficient>
+                <patch_radius>0.1</patch_radius>
+                <ode/>
+              </torsional>
+            </friction>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='belt_joint' type='prismatic'>
+        <pose>0 0 0.741 0 -0 0</pose>
+        <parent>belt_visual</parent>
+        <child>belt_moving</child>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <limit>
+            <lower>0</lower>
+            <upper>1</upper>
+          </limit>
+          <dynamics>
+            <damping>0.01</damping>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+        </axis>
+        <disable_collisions>1</disable_collisions>
+      </joint>
+      <plugin name='ros2_conveyorbelt_plugin' filename='libros2_conveyorbelt_plugin.so'>
+        <ros>
+          <namespace/>
+        </ros>
+        <max_velocity>1.0</max_velocity>
+        <publish_rate>1000</publish_rate>
+      </plugin>
+      <pose>-0.091629 -0.966449 0 0 -0 0</pose>
+    </model> -->
+
+    <!-- Conveyor Belt 1 -->
+    <!-- <model name='conveyor_belt_1'>
+      <pose>0 0 0 0 0 0</pose> -->
+      <!-- [same content as your original model] -->
+      <!-- You MUST paste your full belt model content here -->
+      <!-- <plugin name='conveyor_plugin_1' filename='libros2_conveyorbelt_plugin.so'>
+        <ros>
+          <namespace>/conveyor1</namespace>
+        </ros>
+        <max_velocity>1.0</max_velocity>
+        <publish_rate>1000</publish_rate>
+      </plugin>
+    </model> -->
+
+    <!-- Conveyor Belt 2 -->
+    <!-- <model name='conveyor_belt_2'>
+      <pose>2 0 0 0 0 0</pose> -->
+      <!-- [same content as above, but different pose] -->
+      <!-- <plugin name='conveyor_plugin_2' filename='libros2_conveyorbelt_plugin.so'> -->
+        <!-- <ros>
+          <namespace>/conveyor2</namespace>
+        </ros>
+        <max_velocity>1.0</max_velocity>
+        <publish_rate>1000</publish_rate>
+      </plugin> -->
+    <!-- </model> -->
+
+    <!-- Conveyor Belt 3 -->
+    <!-- <model name='conveyor_belt_3'> -->
+      <!-- <pose>4 0 0 0 0 0</pose> -->
+      <!-- [same content again, but shifted position] -->
+      <!-- <plugin name='conveyor_plugin_3' filename='libros2_conveyorbelt_plugin.so'>
+        <ros>
+          <namespace>/conveyor3</namespace>
+        </ros>
+        <max_velocity>1.0</max_velocity>
+        <publish_rate>1000</publish_rate>
+      </plugin>
+    </model> -->
+
+
+  
+
   </world>
 </sdf>
