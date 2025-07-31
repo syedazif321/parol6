@@ -1,0 +1,93 @@
+#include <gazebo/gazebo.hh>
+#include <gazebo/physics/physics.hh>
+#include <gazebo/common/Plugin.hh>
+#include <gazebo_ros/node.hpp>
+
+#include <rclcpp/rclcpp.hpp>
+#include <std_srvs/srv/trigger.hpp>
+
+#include <sdf/sdf.hh>
+#include <random>
+#include <sstream>
+
+namespace gazebo
+{
+
+class BoxSpawnerPlugin : public WorldPlugin
+{
+public:
+  void Load(physics::WorldPtr world, sdf::ElementPtr /*_sdf*/) override
+  {
+    world_ = world;
+    ros_node_ = gazebo_ros::Node::Get();
+
+    // Create the service
+    srv_ = ros_node_->create_service<std_srvs::srv::Trigger>(
+      "spawn_box",
+      std::bind(&BoxSpawnerPlugin::SpawnBoxCallback, this, std::placeholders::_1, std::placeholders::_2));
+
+    RCLCPP_INFO(ros_node_->get_logger(), "BoxSpawnerPlugin loaded and 'spawn_box' service available.");
+  }
+
+private:
+  physics::WorldPtr world_;
+  gazebo_ros::Node::SharedPtr ros_node_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr srv_;
+  std::default_random_engine gen_;
+  std::uniform_real_distribution<double> x_dist_{-0.2, 0.2};
+  std::uniform_real_distribution<double> y_dist_{-0.5, 0.5};
+  std::uniform_real_distribution<double> yaw_dist_{0.0, 3.14};
+  int box_id_ = 0;
+
+  void SpawnBoxCallback(
+    const std_srvs::srv::Trigger::Request::SharedPtr /*req*/,
+    std_srvs::srv::Trigger::Response::SharedPtr res)
+  {
+    std::string color = (rand() % 2 == 0) ? "Red" : "Blue";
+    std::string size_label = (rand() % 2 == 0) ? "Small" : "Large";
+    double size = (size_label == "Small") ? 0.1 : 0.2;
+
+    double x = x_dist_(gen_);
+    double y = y_dist_(gen_);
+    double z = 0.9;
+    double yaw = yaw_dist_(gen_);
+
+    std::ostringstream name;
+    name << color << "_" << size_label << "_" << box_id_++;
+
+    std::ostringstream sdf_str;
+    sdf_str << "<sdf version='1.6'>"
+            << "<model name='" << name.str() << "'>"
+            << "<static>false</static>"
+            << "<pose>" << x << " " << y << " " << z << " 0 0 " << yaw << "</pose>"
+            << "<link name='link'>"
+            << "  <inertial><mass>1.0</mass></inertial>"
+            << "  <collision name='collision'>"
+            << "    <geometry><box><size>" << size << " " << size << " " << size << "</size></box></geometry>"
+            << "  </collision>"
+            << "  <visual name='visual'>"
+            << "    <geometry><box><size>" << size << " " << size << " " << size << "</size></box></geometry>"
+            << "    <material>"
+            << "      <ambient>" << (color == "Red" ? "1 0 0 1" : "0 0 1 1") << "</ambient>"
+            << "      <diffuse>" << (color == "Red" ? "1 0 0 1" : "0 0 1 1") << "</diffuse>"
+            << "    </material>"
+            << "  </visual>"
+            << "</link>"
+            << "</model>"
+            << "</sdf>";
+
+    sdf::SDF model_sdf;
+    model_sdf.SetFromString(sdf_str.str());
+
+    world_->InsertModelSDF(model_sdf);
+
+    res->success = true;
+    res->message = "Spawned box: " + name.str();
+    RCLCPP_INFO(ros_node_->get_logger(), "Spawned %s", name.str().c_str());
+  }
+};
+
+// Register plugin with Gazebo
+GZ_REGISTER_WORLD_PLUGIN(BoxSpawnerPlugin)
+
+}  // namespace gazebo
