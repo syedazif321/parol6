@@ -9,22 +9,22 @@
 
   <link name="base_link">
       <inertial>
-        <origin xyz="-0.0274562034602567 -0.00137265400595656 0.031237920982338" rpy="0 0 0" />
-        <mass value="0.812661291810144" />
-        <inertia ixx="0.00110740279540382" ixy="4.67463481205112E-05" ixz="8.47873933528831E-06"
+        <origin xyz="-0.041184305190385045 -0.00205898100893484 0.046856881473507" rpy="0 0 0" />
+        <mass value="2.742731859859236" />
+        <inertia ixx="0.008409339977597758" ixy="0.00035498008104013193" ixz="6.43854268273456e-05"
                 iyy="0.00106582362830227" iyz="-2.6194130573118E-06" izz="0.00147883396699374" />
       </inertial>
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://parol6_description/meshes/base_link.STL"/>
+          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/base_link.STL" scale="1.5 1.5 1.5"/>
 
         </geometry>
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://parol6_description/meshes/base_link.STL"/>
+          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/base_link.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </collision>
   </link>
@@ -39,21 +39,21 @@
 
   <link name="L1">
       <inertial>
-        <origin xyz="0.00524529891406311 0.0289722820784871 0.0992791429452917" rpy="0 0 0" />
-        <mass value="0.644800830530233" />
-        <inertia ixx="0.00109429409029172" ixy="-6.27156874097953E-05" ixz="-5.70466862844753E-05"
+        <origin xyz="0.007867948371094665 0.043458423117730655 0.14891871441793755" rpy="0 0 0" />
+        <mass value="2.176202803039536" />
+        <inertia ixx="0.00830979574815275" ixy="-0.0004762472512681331" ixz="-0.00043319827397273435"
                 iyy="0.00056996197700816" iyz="-0.000121686402940313" izz="0.00129487722474286" />
       </inertial>
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://parol6_description/meshes/L1.STL"/>
+          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L1.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://parol6_description/meshes/L1.STL"/>
+          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L1.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </collision>
   </link>
@@ -63,7 +63,7 @@
   </gazebo>
 
   <joint name="J1" type="revolute">
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
       <parent link="base_link" />
       <child link="L1" />
       <axis xyz="0 0 1" />
@@ -72,21 +72,21 @@
 
   <link name="L2">
       <inertial>
-        <origin xyz="-0.0094181617193695 -0.0783879603613605 0.0369429741417731" rpy="0 0 0" />
-        <mass value="0.512334779399788" />
-        <inertia ixx="0.00123357482646866" ixy="3.63236238096924E-06" ixz="-3.30834557934783E-07"
+        <origin xyz="-0.014127242579054249 -0.11758194054204076 0.055414461212659645" rpy="0 0 0" />
+        <mass value="1.7291298804742845" />
+        <inertia ixx="0.009367458838496387" ixy="2.7583251830485166e-05" ixz="-2.5122749243172585e-06"
                 iyy="0.000205462733796053" iyz="4.86441772103282E-07" izz="0.00132225033266162" />
       </inertial>
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://parol6_description/meshes/L2.STL"/>
+          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L2.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://parol6_description/meshes/L2.STL"/>
+          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L2.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </collision>
   </link>
@@ -96,7 +96,7 @@
   </gazebo>
 
   <joint name="J2" type="revolute">
-      <origin xyz="0.0234207210610375 0 0.1105" rpy="-1.5707963267949 0 0" />
+      <origin xyz="0.03513108159155625 0.0 0.16575" rpy="-1.5707963267949 0 0" />
       <parent link="L1" />
       <child link="L2" />
       <axis xyz="0 0 1" />
@@ -105,21 +105,21 @@
 
   <link name="L3">
       <inertial>
-        <origin xyz="0.0155509885239593 -0.0191127686426613 -0.00153322577917236" rpy="0 0 0" />
-        <mass value="0.550970997806044" />
-        <inertia ixx="0.00057827573271994" ixy="0.000116505232322314" ixz="-1.19955293256513E-05"
+        <origin xyz="0.02332648278593895 -0.028669152963991952 -0.00229983866875854" rpy="0 0 0" />
+        <mass value="1.8595271175953985" />
+        <inertia ixx="0.004391281345342044" ixy="0.0008847116079475719" ixz="-9.109105081666456e-05"
                 iyy="0.000567011676944701" iyz="1.55814255036021E-05" izz="0.000815862001506843" />
       </inertial>
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://parol6_description/meshes/L3.STL"/>
+          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L3.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://parol6_description/meshes/L3.STL"/>
+          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L3.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </collision>
   </link>
@@ -129,7 +129,7 @@
   </gazebo>
 
   <joint name="J3" type="revolute">
-      <origin xyz="0 -0.18 0" rpy="3.1416 0 -1.5708" />
+      <origin xyz="0.0 -0.27 0.0" rpy="3.1416 0 -1.5708" />
       <parent link="L2" />
       <child link="L3" />
       <axis xyz="0 0 -1" />
@@ -138,20 +138,20 @@
 
   <link name="L4">
       <inertial>
-        <origin xyz="0.000947028430634433 -0.008978947112462 -0.0924798659827059" rpy="0 0 0" />
-        <mass value="0.39346362633915" />
-        <inertia ixx="0.000371672516830215" ixy="-1.05560000666389E-05" ixz="-1.56899445418326E-07"
+        <origin xyz="0.0014205426459516495 -0.013468420668693002 -0.13871979897405884" rpy="0 0 0" />
+        <mass value="1.3279397388946312" />
+        <inertia ixx="0.0028223881746794453" ixy="-8.015962550603914e-05" ixz="-1.191455163645413e-06"
                 iyy="0.000332364226344361" iyz="-6.10397110934672E-05" izz="0.000250606789571909" />
       </inertial>
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://parol6_description/meshes/L4.STL"/>
+          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L4.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </visual>
       <collision>
         <geometry>
-           <mesh filename="package://parol6_description/meshes/L4.STL"/>
+           <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L4.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </collision>
   </link>
@@ -161,7 +161,7 @@
   </gazebo>
 
   <joint name="J4" type="revolute">
-      <origin xyz="0.0435 0.0 0.0" rpy="1.5708 0 3.1415" />
+      <origin xyz="0.06525 0.0 0.0" rpy="1.5708 0 3.1415" />
       <parent link="L3" />
       <child link="L4" />
       <axis xyz="0 0 1" />
@@ -170,8 +170,8 @@
 
   <link name="L5">
       <inertial>
-        <origin xyz="6.7162171684676E-06 -0.00621420980825221 -0.000960871025916146" rpy="0 0 0" />
-        <mass value="0.185171777001718" />
+        <origin xyz="1.00743257527014e-05 -0.009321314712378315 -0.001441306538874219" rpy="0 0 0" />
+        <mass value="0.6249547473807983" />
         <inertia
           ixx="0.000109176748460021"
           ixy="-1.27195013439061E-07"
@@ -181,15 +181,15 @@
           izz="0.000110629136236229" />
       </inertial>
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://parol6_description/meshes/L5.STL"/>
+          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L5.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://parol6_description/meshes/L5.STL"/>
+          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L5.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </collision>
   </link>
@@ -199,7 +199,7 @@
   </gazebo>
 
   <joint name="J5" type="revolute">
-      <origin xyz="0 0 -0.17635" rpy="-1.5708 0 0" />
+      <origin xyz="0.0 0.0 -0.264525" rpy="-1.5708 0 0" />
       <parent link="L4" />
       <child link="L5" />
       <axis xyz="0 0 -1" />
@@ -208,8 +208,8 @@
 
   <link name="L6">
       <inertial>
-        <origin xyz="0.00632955087228015 -0.000453856352095022 -0.0554441567386594" rpy="0 0 0" />
-        <mass value="0.0703261410665101" />
+        <origin xyz="0.009494326308420224 -0.000680784528142533 -0.0831662351079891" rpy="0 0 0" />
+        <mass value="0.23735072609947158" />
         <inertia
           ixx="1.40276237518287E-05"
           ixy="3.15503246005279E-07"
@@ -219,15 +219,15 @@
           izz="2.34608103291027E-05" />
       </inertial>
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://parol6_description/meshes/vaccum_gripper_holder.stl"/>
+          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/vaccum_gripper_holder.stl" scale="1.5 1.5 1.5"/>
         </geometry>
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://parol6_description/meshes/vaccum_gripper_holder.stl"/>
+          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/vaccum_gripper_holder.stl" scale="1.5 1.5 1.5"/>
         </geometry>
       </collision>
   </link>
@@ -237,7 +237,7 @@
   </gazebo>
 
   <joint name="J6" type="continuous">
-      <origin xyz="0 0 0" rpy="1.5708 0 0" />
+      <origin xyz="0.0 0.0 0.0" rpy="1.5708 0 0" />
       <parent link="L5" />
       <child link="L6" />
       <axis xyz="0 0 -1" />
@@ -247,20 +247,20 @@
 
   <link name="suction_gripper">
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://parol6_description/meshes/vaccum_gripper.stl"/>
+          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/vaccum_gripper.stl" scale="1.5 1.5 1.5"/>
         </geometry>
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://parol6_description/meshes/vaccum_gripper.stl"/>
+          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/vaccum_gripper.stl" scale="1.5 1.5 1.5"/>
         </geometry>
       </collision>
       <inertial>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
-        <mass value="0.01"/>
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+        <mass value="0.03375"/>
         <inertia
           ixx="1e-6" ixy="0" ixz="0"
           iyy="1e-6" iyz="0"
@@ -276,7 +276,7 @@
   <joint name="J7" type="fixed">
       <parent link="L6"/>
       <child link="suction_gripper"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
   </joint>
 
 
@@ -289,9 +289,8 @@
   <joint name="tool0_fixed" type="fixed">
       <parent link="suction_gripper"/>
       <child link="tool0"/>
-      <origin xyz="0.083695 -0.000779 -0.060305" rpy="0 0 0"/>
+      <origin xyz="0.1255425 -0.0011684999999999998 -0.0904575" rpy="0 0 0"/>
   </joint>
 
 
 </robot>
-

@@ -1,8 +1,7 @@
 <sdf version='1.7'>
   <world name='default'>
     <plugin name='gazebo_ros_factory' filename='libgazebo_ros_factory.so'/>
-    <plugin name="box_spawner_plugin" filename="libbox_spawner_plugin.so"/>
-
+    <plugin name='box_spawner_plugin' filename='libbox_spawner_plugin.so'/>
     <gravity>0 0 -9.8</gravity>
     <physics name='default_physics' default='0' type='ode'>
       <max_step_size>0.001</max_step_size>
@@ -69,67 +68,6 @@
       </link>
       <static>1</static>
       <pose>-5.79514 -0.956635 0 0 -0 0</pose>
-    </model>
-    <model name='aws_robomaker_warehouse_WallB_01_001'>
-      <frame name='aws_robomaker_warehouse_WallB_01::__model__' attached_to='aws_robomaker_warehouse_WallB_01::link'>
-        <pose relative_to='__model__'>0 0 0 0 -0 0</pose>
-      </frame>
-      <link name='aws_robomaker_warehouse_WallB_01::link'>
-        <inertial>
-          <mass>1000</mass>
-          <inertia>
-            <ixx>840083</ixx>
-            <ixy>0</ixy>
-            <ixz>0</ixz>
-            <iyy>475500</iyy>
-            <iyz>0</iyz>
-            <izz>1.30208e+06</izz>
-          </inertia>
-        </inertial>
-        <collision name='collision'>
-          <geometry>
-            <mesh>
-              <uri>model://aws_robomaker_warehouse_WallB_01/meshes/aws_robomaker_warehouse_WallB_01_collision.DAE</uri>
-              <scale>1 1 1</scale>
-            </mesh>
-          </geometry>
-          <surface>
-            <friction>
-              <ode>
-                <mu>0.5</mu>
-                <mu2>0.5</mu2>
-                <fdir1>0 0 0</fdir1>
-                <slip1>0</slip1>
-                <slip2>0</slip2>
-              </ode>
-              <torsional>
-                <ode/>
-              </torsional>
-            </friction>
-            <contact>
-              <ode/>
-            </contact>
-            <bounce/>
-          </surface>
-          <max_contacts>10</max_contacts>
-        </collision>
-        <visual name='visual'>
-          <geometry>
-            <mesh>
-              <uri>model://aws_robomaker_warehouse_WallB_01/meshes/aws_robomaker_warehouse_WallB_01_visual.DAE</uri>
-            </mesh>
-          </geometry>
-          <meta>
-            <layer>2</layer>
-          </meta>
-        </visual>
-        <pose relative_to='aws_robomaker_warehouse_WallB_01::__model__'>0 0 0 0 -0 0</pose>
-        <self_collide>0</self_collide>
-        <enable_wind>0</enable_wind>
-        <kinematic>0</kinematic>
-      </link>
-      <static>1</static>
-      <pose>0 0 0 0 -0 0</pose>
     </model>
     <model name='aws_robomaker_warehouse_ShelfE_01_001'>
       <frame name='aws_robomaker_warehouse_ShelfE_01::__model__' attached_to='aws_robomaker_warehouse_ShelfE_01::link'>
@@ -1644,7 +1582,7 @@
     </light>
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose>0.635831 -1.39579 4.35057 0 1.3858 3.14015</pose>
+        <pose>-0.484143 -3.24897 2.69716 0 0.725799 1.69534</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
@@ -1748,10 +1686,10 @@
       <pose>-0.788207 -1.11944 0 0 -0 0</pose>
     </model>
     <state world_name='default'>
-      <sim_time>714 630000000</sim_time>
-      <real_time>168 596962762</real_time>
-      <wall_time>1753873560 254268811</wall_time>
-      <iterations>160575</iterations>
+      <sim_time>818 493000000</sim_time>
+      <real_time>226 560598577</real_time>
+      <wall_time>1754030767 601969322</wall_time>
+      <iterations>103863</iterations>
       <model name='aws_robomaker_warehouse_Bucket_01_020'>
         <pose>0.433449 9.63171 0 0 0 -1.56316</pose>
         <scale>1 1 1</scale>
@@ -1992,16 +1930,6 @@
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
-      <model name='aws_robomaker_warehouse_WallB_01_001'>
-        <pose>0 0 0 0 -0 0</pose>
-        <scale>1 1 1</scale>
-        <link name='aws_robomaker_warehouse_WallB_01::link'>
-          <pose>0 0 0 0 -0 0</pose>
-          <velocity>0 0 0 0 -0 0</velocity>
-          <acceleration>0 0 0 0 -0 0</acceleration>
-          <wrench>0 0 0 0 -0 0</wrench>
-        </link>
-      </model>
       <model name='cafe_table'>
         <pose>-0.610748 -1.10619 0 0 -0 0</pose>
         <scale>0.5 0.5 1</scale>
@@ -2012,8 +1940,62 @@
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
+      <model name='conveyor_belt1'>
+        <pose>-1.46131 -0.801702 0.034214 3.3e-05 -1.9e-05 1.54609</pose>
+        <scale>1 1 1</scale>
+        <link name='belt_moving'>
+          <pose>-1.46131 -0.801716 0.775214 3.3e-05 -1.9e-05 1.54609</pose>
+          <velocity>0.00077 -0.00172 -0.007674 -0.0115 0.03399 -0.002763</velocity>
+          <acceleration>-0.241581 -9.28037 20.3842 0.425145 1.2712 -0.855424</acceleration>
+          <wrench>-36.2372 -1392.06 3057.63 0 -0 0</wrench>
+        </link>
+        <link name='belt_visual'>
+          <pose>-1.46131 -0.801702 0.034214 3.3e-05 -1.9e-05 1.54609</pose>
+          <velocity>0.00077 -0.00172 -0.007674 -0.01137 0.033889 -0.003801</velocity>
+          <acceleration>0.17119 -0.350741 20.3837 0.351442 1.26724 -0.855281</acceleration>
+          <wrench>85.595 -175.371 10191.9 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='conveyor_belt2'>
+        <pose>0.275979 -1.09374 0.034224 3e-06 -6e-06 -1.58176</pose>
+        <scale>1 1 1</scale>
+        <link name='belt_moving'>
+          <pose>0.275391 -1.09373 0.775224 3e-06 -6e-06 -1.58176</pose>
+          <velocity>-0 -0 0.004081 -0.001731 0.008476 -2e-06</velocity>
+          <acceleration>-0.077642 -5.04679 -4.80181 1.33148 -1.00566 0</acceleration>
+          <wrench>-7.76419 -504.679 -480.181 0 -0 0</wrench>
+        </link>
+        <link name='belt_visual'>
+          <pose>0.275979 -1.09374 0.034224 3e-06 -6e-06 -1.58176</pose>
+          <velocity>-0 -0 0.004081 -0.001845 0.008476 -0</velocity>
+          <acceleration>-3.3e-05 -7e-06 -4.80255 -0.891097 1.07334 3.14154</acceleration>
+          <wrench>-0.016346 -0.003403 -2401.28 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='conveyor_belt3'>
+        <pose>-1.4813 -1.39977 0.034206 4.4e-05 -5e-06 -1.596</pose>
+        <scale>1 1 1</scale>
+        <link name='belt_moving'>
+          <pose>-1.48169 -1.39976 0.775206 4.4e-05 -5e-06 -1.596</pose>
+          <velocity>-0.000273 -0.000608 -0.011314 -0.004417 -0.028144 0.001512</velocity>
+          <acceleration>0.085926 3.20755 2.35713 -1.66678 -0.016548 2.17924</acceleration>
+          <wrench>12.8889 481.132 353.569 0 -0 0</wrench>
+        </link>
+        <link name='belt_visual'>
+          <pose>-1.4813 -1.39977 0.034206 4.4e-05 -5e-06 -1.596</pose>
+          <velocity>-0.000273 -0.000608 -0.011314 -0.004421 -0.028144 0.001519</velocity>
+          <acceleration>-0.190977 0.390991 2.35527 -1.66293 -0.016383 2.19305</acceleration>
+          <wrench>-95.4884 195.496 1177.63 0 -0 0</wrench>
+        </link>
+      </model>
       <light name='Warehouse_CeilingLight_003'>
         <pose>0 0 9 0 -0 0</pose>
+      </light>
+      <light name='user_directional_light_0'>
+        <pose>-0.035198 -2.39457 6.28231 0.428429 -0 0</pose>
+      </light>
+      <light name='user_spot_light_0'>
+        <pose>0.071291 -7.46909 3.79032 -2.02862 0.08659 0.173743</pose>
       </light>
     </state>
     <model name='conveyor_belt2'>
@@ -2137,9 +2119,8 @@
         <max_velocity>1.0</max_velocity>
         <publish_rate>1000</publish_rate>
       </plugin>
-      <pose>0.276052 -1.105317 0.03422 0 -0 -1.569596</pose>
+      <pose>0.276052 -1.10532 0.03422 0 -0 -1.5696</pose>
     </model>
-
     <model name='conveyor_belt1'>
       <static>0</static>
       <self_collide>0</self_collide>
@@ -2260,9 +2241,8 @@
         <max_velocity>1.0</max_velocity>
         <publish_rate>1000</publish_rate>
       </plugin>
-      <pose>-1.464024 -0.784193 0.034225 0 -0 1.552516</pose>
+      <pose>-1.46402 -0.784193 0.034225 0 -0 1.55252</pose>
     </model>
-
     <model name='conveyor_belt3'>
       <static>0</static>
       <self_collide>0</self_collide>
@@ -2383,12 +2363,38 @@
         <max_velocity>1.0</max_velocity>
         <publish_rate>1000</publish_rate>
       </plugin>
-      <pose>-1.478598 -1.416970 0.034224 0 -0 -1.590078</pose>
+      <pose>-1.4786 -1.41697 0.034224 0 -0 -1.59008</pose>
     </model>
-
-
-
-  
-
+    <light name='user_directional_light_0' type='directional'>
+      <pose>0.3861 -3.29985 1 0 -0 0</pose>
+      <diffuse>0.5 0.5 0.5 1</diffuse>
+      <specular>0.1 0.1 0.1 1</specular>
+      <direction>0.1 0.1 -0.9</direction>
+      <attenuation>
+        <range>20</range>
+        <constant>0.5</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <cast_shadows>1</cast_shadows>
+    </light>
+    <light name='user_spot_light_0' type='spot'>
+      <pose>-0.451077 -3.8585 1 0 -0 0</pose>
+      <diffuse>0.5 0.5 0.5 1</diffuse>
+      <specular>0.1 0.1 0.1 1</specular>
+      <direction>0 0 -1</direction>
+      <attenuation>
+        <range>20</range>
+        <constant>0.5</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <cast_shadows>0</cast_shadows>
+      <spot>
+        <inner_angle>0.6</inner_angle>
+        <outer_angle>1</outer_angle>
+        <falloff>1</falloff>
+      </spot>
+    </light>
   </world>
 </sdf>
