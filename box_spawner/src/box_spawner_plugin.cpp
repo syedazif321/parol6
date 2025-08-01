@@ -35,44 +35,42 @@ private:
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr srv_;
 
   std::default_random_engine gen_;
-  std::uniform_real_distribution<double> x_dist_{0.703363, 0.7055};   // Adjust for conveyor area
+  std::uniform_real_distribution<double> x_dist_{0.703363, 0.7055};
   std::uniform_real_distribution<double> y_dist_{-1.09465, -1.054465};
   std::uniform_real_distribution<double> yaw_dist_{0.0, 3.14};
 
   std::map<std::string, int> color_counter_ = {{"Red", 1}, {"Blue", 1}};
 
-  // Configurable size/mass values
-  double small_size_ = 0.12;
-  double large_size_ = 0.15;
-  double small_mass_ = 2.0;
-  double large_mass_ = 3.0;
+  double small_size_ = 0.10;
+  double large_size_ = 0.12;
+  double small_mass_ = 15.0;
+  double large_mass_ = 18.0;
 
   void SpawnBoxCallback(
     const std_srvs::srv::Trigger::Request::SharedPtr,
     std_srvs::srv::Trigger::Response::SharedPtr res)
   {
-    // Randomly assign box type
     std::string color = (rand() % 2 == 0) ? "Red" : "Blue";
     std::string size_label = (rand() % 2 == 0) ? "Small" : "Large";
 
     double size = (size_label == "Small") ? small_size_ : large_size_;
     double mass = (size_label == "Small") ? small_mass_ : large_mass_;
+    double inertia_val = (1.0 / 6.0) * mass * size * size;
 
     double x = x_dist_(gen_);
     double y = y_dist_(gen_);
-    double z = 0.90 + size / 2.0;
+    double z = 0.95 + size / 2.0;  // Prevent initial collision with ground
     double yaw = yaw_dist_(gen_);
 
-    // Construct box name
     int id = color_counter_[color]++;
     std::ostringstream name;
     name << color << "_" << id;
 
-    // Build SDF model string
     std::ostringstream sdf_str;
     sdf_str << "<sdf version='1.6'>"
             << "<model name='" << name.str() << "'>"
             << "<static>false</static>"
+            << "<self_collide>false</self_collide>"
             << "<pose>" << x << " " << y << " " << z << " 0 0 " << yaw << "</pose>"
             << "<link name='link'>"
 
@@ -80,17 +78,20 @@ private:
             << "  <inertial>"
             << "    <mass>" << mass << "</mass>"
             << "    <inertia>"
-            << "      <ixx>0.001</ixx><iyy>0.001</iyy><izz>0.001</izz>"
+            << "      <ixx>" << inertia_val << "</ixx><iyy>" << inertia_val << "</iyy><izz>" << inertia_val << "</izz>"
             << "      <ixy>0.0</ixy><ixz>0.0</ixz><iyz>0.0</iyz>"
             << "    </inertia>"
             << "  </inertial>"
 
-            // Collision
+            // Collision block with surface contact and friction
             << "  <collision name='collision'>"
             << "    <geometry><box><size>" << size << " " << size << " " << size << "</size></box></geometry>"
             << "    <surface>"
+            << "      <contact>"
+            << "        <ode><soft_cfm>0.00001</soft_cfm><soft_erp>0.2</soft_erp></ode>"
+            << "      </contact>"
             << "      <friction>"
-            << "        <ode><mu>2.0</mu><mu2>2.0</mu2></ode>"
+            << "        <ode><mu>1.0</mu><mu2>1.0</mu2></ode>"
             << "      </friction>"
             << "    </surface>"
             << "  </collision>"

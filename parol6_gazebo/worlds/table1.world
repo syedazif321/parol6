@@ -2,6 +2,7 @@
   <world name='default'>
     <plugin name='gazebo_ros_factory' filename='libgazebo_ros_factory.so'/>
     <plugin name='box_spawner_plugin' filename='libbox_spawner_plugin.so'/>
+    <plugin name="attach_detach_plugin" filename="libattach_detach.so"/>
     <gravity>0 0 -9.8</gravity>
     <physics name='default_physics' default='0' type='ode'>
       <max_step_size>0.001</max_step_size>
