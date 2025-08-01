@@ -3,22 +3,8 @@
 
   <xacro:macro name="intel_d435_camera" params="parent_link prefix">
 
+    <!-- Camera base link with inertial only (no visual/collision) -->
     <link name="${prefix}camera_link">
-      <visual>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
-        <geometry>
-          <box size="0.1 0.1 0.1"/>  <!-- realistic camera size -->
-        </geometry>
-        <material name="gray">
-          <color rgba="0.5 0.5 0.5 1"/>
-        </material>
-      </visual>
-      <collision>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
-        <geometry>
-          <box size="0.1 0.1 0.1"/>
-        </geometry>
-      </collision>
       <inertial>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <mass value="0.001"/>
@@ -26,27 +12,35 @@
       </inertial>
     </link>
 
+    <!-- Mount camera to parent -->
     <joint name="${prefix}camera_joint" type="fixed">
       <parent link="${parent_link}"/>
       <child link="${prefix}camera_link"/>
-      <origin xyz="-0.679702 -1.115119 1.988560" rpy="0 1.5708 0"/> <!-- 1 -->
+      <origin xyz="-0.170649 -1.081887 1.088560" rpy="3.1416 1.5708 0"/>
     </joint>
 
+    <!-- Optical frames -->
     <link name="${prefix}camera_depth_optical_frame"/>
     <joint name="${prefix}camera_depth_optical_joint" type="fixed">
       <parent link="${prefix}camera_link"/>
       <child link="${prefix}camera_depth_optical_frame"/>
-      <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>  <!-- 2 -->
+      <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
     </joint>
 
     <link name="${prefix}camera_rgb_optical_frame"/>
     <joint name="${prefix}camera_rgb_optical_joint" type="fixed">
       <parent link="${prefix}camera_link"/>
       <child link="${prefix}camera_rgb_optical_frame"/>
-      <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/> <!-- 3 -->
+      <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
     </joint>
 
+    <!-- Make camera invisible in Gazebo -->
     <gazebo reference="${prefix}camera_link">
+      <material>Gazebo/BlackTransparent</material>
+      <transparency>1.0</transparency>
+      <cast_shadows>false</cast_shadows>
+
+      <!-- RGB sensor -->
       <sensor name="${prefix}d435_rgb" type="camera">
         <update_rate>30.0</update_rate>
         <camera>
@@ -63,6 +57,7 @@
         </plugin>
       </sensor>
 
+      <!-- Infra1 sensor -->
       <sensor name="${prefix}d435_infra1" type="camera">
         <update_rate>30.0</update_rate>
         <camera>
@@ -79,6 +74,7 @@
         </plugin>
       </sensor>
 
+      <!-- Infra2 sensor -->
       <sensor name="${prefix}d435_infra2" type="camera">
         <update_rate>30.0</update_rate>
         <camera>
@@ -95,6 +91,7 @@
         </plugin>
       </sensor>
 
+      <!-- Depth sensor -->
       <sensor name="${prefix}d435_depth" type="depth">
         <update_rate>30.0</update_rate>
         <camera>
