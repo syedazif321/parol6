@@ -17,14 +17,14 @@
       <visual>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/base_link.STL" scale="1.5 1.5 1.5"/>
+          <mesh filename="package://parol6_description/meshes/base_link.STL" scale="1.5 1.5 1.5"/>
 
         </geometry>
       </visual>
       <collision>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/base_link.STL" scale="1.5 1.5 1.5"/>
+          <mesh filename="package://parol6_description/meshes/base_link.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </collision>
   </link>
@@ -47,13 +47,13 @@
       <visual>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L1.STL" scale="1.5 1.5 1.5"/>
+          <mesh filename="package://parol6_description/meshes/L1.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </visual>
       <collision>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L1.STL" scale="1.5 1.5 1.5"/>
+          <mesh filename="package://parol6_description/meshes/L1.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </collision>
   </link>
@@ -80,13 +80,13 @@
       <visual>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L2.STL" scale="1.5 1.5 1.5"/>
+          <mesh filename="package://parol6_description/meshes/L2.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </visual>
       <collision>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L2.STL" scale="1.5 1.5 1.5"/>
+          <mesh filename="package://parol6_description/meshes/L2.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </collision>
   </link>
@@ -113,13 +113,13 @@
       <visual>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L3.STL" scale="1.5 1.5 1.5"/>
+          <mesh filename="package://parol6_description/meshes/L3.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </visual>
       <collision>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L3.STL" scale="1.5 1.5 1.5"/>
+          <mesh filename="package://parol6_description/meshes/L3.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </collision>
   </link>
@@ -146,12 +146,12 @@
       <visual>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L4.STL" scale="1.5 1.5 1.5"/>
+          <mesh filename="package://parol6_description/meshes/L4.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </visual>
       <collision>
         <geometry>
-           <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L4.STL" scale="1.5 1.5 1.5"/>
+           <mesh filename="package://parol6_description/meshes/L4.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </collision>
   </link>
@@ -179,13 +179,13 @@
       <visual>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L5.STL" scale="1.5 1.5 1.5"/>
+          <mesh filename="package://parol6_description/meshes/L5.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </visual>
       <collision>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/L5.STL" scale="1.5 1.5 1.5"/>
+          <mesh filename="package://parol6_description/meshes/L5.STL" scale="1.5 1.5 1.5"/>
         </geometry>
       </collision>
   </link>
@@ -213,13 +213,13 @@
       <visual>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/vaccum_gripper_holder.stl" scale="1.5 1.5 1.5"/>
+          <mesh filename="package://parol6_description/meshes/vaccum_gripper_holder.stl" scale="1.5 1.5 1.5"/>
         </geometry>
       </visual>
       <collision>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/vaccum_gripper_holder.stl" scale="1.5 1.5 1.5"/>
+          <mesh filename="package://parol6_description/meshes/vaccum_gripper_holder.stl" scale="1.5 1.5 1.5"/>
         </geometry>
       </collision>
   </link>
@@ -241,13 +241,13 @@
       <visual>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/vaccum_gripper.stl" scale="1.5 1.5 1.5"/>
+          <mesh filename="package://parol6_description/meshes/vaccum_gripper.stl" scale="1.5 1.5 1.5"/>
         </geometry>
       </visual>
       <collision>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="file:///home/azif/projetcs/parol6/parol6_description/meshes/vaccum_gripper.stl" scale="1.5 1.5 1.5"/>
+          <mesh filename="package://parol6_description/meshes/vaccum_gripper.stl" scale="1.5 1.5 1.5"/>
         </geometry>
       </collision>
       
