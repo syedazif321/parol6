@@ -8,8 +8,8 @@
     <!-- Import control_xacro -->
     <xacro:include filename="parol6.ros2_control.xacro" />
 
-    <xacro:include filename="$(find parol6_description)/urdf/camera_module.urdf.xacro" />
-    <xacro:intel_d435_camera parent_link="world" prefix="d435_"/>
+    <!-- <xacro:include filename="$(find parol6_description)/urdf/camera_module.urdf.xacro" />
+    <xacro:intel_d435_camera parent_link="world" prefix="d435_"/> -->
 
     <!-- <xacro:parol6_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/> -->
     <xacro:parol6_ros2_control name="parol6" initial_positions_file="$(find parol6_moveit2_config)/config/initial_positions.yaml"/>

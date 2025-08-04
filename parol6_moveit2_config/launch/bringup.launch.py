@@ -154,6 +154,39 @@ def generate_launch_description():
         ],
     )
 
+    static_tf_camera_mount = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='tf_camera_mount',
+        arguments=[
+            '-0.170649', '-1.081887', '1.088560', '3.1416', '1.5708', '0',
+            'world', 'camera_link'
+        ]
+    )
+
+    static_tf_rgb_optical = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='tf_camera_rgb_optical',
+        arguments=[
+            '0', '0', '0', '-1.5708', '0', '-1.5708',
+            'camera_link', 'camera_rgb_optical_frame'
+        ]
+    )
+
+    static_tf_depth_optical = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='tf_camera_depth_optical',
+        arguments=[
+            '0', '0', '0', '-1.5708', '0', '-1.5708',
+            'camera_link', 'camera_depth_optical_frame'
+        ]
+    )
+
+
+
+
     return LaunchDescription([
         declare_use_sim,
         gazebo_launch,
@@ -163,4 +196,7 @@ def generate_launch_description():
         move_group_node,
         rviz_node,
         servo_node,
+        static_tf_camera_mount,
+        static_tf_rgb_optical,
+        static_tf_depth_optical,
     ])

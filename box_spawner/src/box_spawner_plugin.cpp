@@ -38,28 +38,24 @@ private:
   std::uniform_real_distribution<double> x_dist_{0.703363, 0.7055};
   std::uniform_real_distribution<double> y_dist_{-1.09465, -1.054465};
   std::uniform_real_distribution<double> yaw_dist_{0.0, 3.14};
+  std::uniform_real_distribution<double> size_dist_{0.08, 0.12};
 
   std::map<std::string, int> color_counter_ = {{"Red", 1}, {"Blue", 1}};
 
-  double small_size_ = 0.10;
-  double large_size_ = 0.12;
-  double small_mass_ = 15.0;
-  double large_mass_ = 18.0;
+  double mass_ = 15.0; 
 
   void SpawnBoxCallback(
     const std_srvs::srv::Trigger::Request::SharedPtr,
     std_srvs::srv::Trigger::Response::SharedPtr res)
   {
     std::string color = (rand() % 2 == 0) ? "Red" : "Blue";
-    std::string size_label = (rand() % 2 == 0) ? "Small" : "Large";
 
-    double size = (size_label == "Small") ? small_size_ : large_size_;
-    double mass = (size_label == "Small") ? small_mass_ : large_mass_;
-    double inertia_val = (1.0 / 6.0) * mass * size * size;
+    double size = size_dist_(gen_);
+    double inertia_val = (1.0 / 6.0) * mass_ * size * size;
 
     double x = x_dist_(gen_);
     double y = y_dist_(gen_);
-    double z = 0.95 + size / 2.0;  // Prevent initial collision with ground
+    double z = 0.95 + size / 2.0;
     double yaw = yaw_dist_(gen_);
 
     int id = color_counter_[color]++;
@@ -74,16 +70,14 @@ private:
             << "<pose>" << x << " " << y << " " << z << " 0 0 " << yaw << "</pose>"
             << "<link name='link'>"
 
-            // Inertial block
             << "  <inertial>"
-            << "    <mass>" << mass << "</mass>"
+            << "    <mass>" << mass_ << "</mass>"
             << "    <inertia>"
             << "      <ixx>" << inertia_val << "</ixx><iyy>" << inertia_val << "</iyy><izz>" << inertia_val << "</izz>"
             << "      <ixy>0.0</ixy><ixz>0.0</ixz><iyz>0.0</iyz>"
             << "    </inertia>"
             << "  </inertial>"
 
-            // Collision block with surface contact and friction
             << "  <collision name='collision'>"
             << "    <geometry><box><size>" << size << " " << size << " " << size << "</size></box></geometry>"
             << "    <surface>"
@@ -96,7 +90,6 @@ private:
             << "    </surface>"
             << "  </collision>"
 
-            // Visual
             << "  <visual name='visual'>"
             << "    <geometry><box><size>" << size << " " << size << " " << size << "</size></box></geometry>"
             << "    <material>"
@@ -115,7 +108,7 @@ private:
 
     res->success = true;
     res->message = "Spawned box: " + name.str();
-    RCLCPP_INFO(ros_node_->get_logger(), " Spawned %s (%s %s)", name.str().c_str(), color.c_str(), size_label.c_str());
+    RCLCPP_INFO(ros_node_->get_logger(), " Spawned %s (color=%s, size=%.3f)", name.str().c_str(), color.c_str(), size);
   }
 };
 
