@@ -1,12 +1,9 @@
 #include "parol6_pipeline/box_detector.hpp"
-#include <sensor_msgs/image_encodings.hpp>
-#include <geometry_msgs/msg/quaternion.hpp>
-#include <cv_bridge/cv_bridge.h>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
-#include <cmath>
-#include <sstream>
-#include <numeric>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 
 BoxDetector::BoxDetector()
 : Node("box_detector_node"),
@@ -17,18 +14,19 @@ BoxDetector::BoxDetector()
   min_area_(declare_parameter("min_area", 300.0)),
   camera_frame_(declare_parameter("camera_frame", "camera_link"))
 {
-  RCLCPP_INFO(this->get_logger(), "Initializing BoxDetector node");
-
   pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/detected_box_pose", 10);
   info_pub_ = this->create_publisher<std_msgs::msg::String>("/detected_box_info", 10);
 
   rgb_sub_ = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::Image>>(this, "/d435/rgb/rgb/image_raw");
   depth_sub_ = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::Image>>(this, "/d435/depth/depth/depth/image_raw");
 
+  tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+  tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
   sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(SyncPolicy(10), *rgb_sub_, *depth_sub_);
   sync_->registerCallback(std::bind(&BoxDetector::imageCallback, this, std::placeholders::_1, std::placeholders::_2));
 
-  RCLCPP_INFO(this->get_logger(), "Subscribers and synchronizer initialized");
+  RCLCPP_INFO(this->get_logger(), "BoxDetector initialized");
 }
 
 void BoxDetector::imageCallback(
@@ -42,19 +40,40 @@ void BoxDetector::imageCallback(
     cv::Mat hsv;
     cv::cvtColor(rgb_ptr->image, hsv, cv::COLOR_BGR2HSV);
 
-    cv::Mat red_mask, blue_mask;
-    cv::inRange(hsv, cv::Scalar(0, 100, 100), cv::Scalar(10, 255, 255), red_mask);
-    cv::inRange(hsv, cv::Scalar(100, 150, 0), cv::Scalar(140, 255, 255), blue_mask);
+    cv::Mat red_mask = createRedMask(hsv);
+    cv::Mat blue_mask = createBlueMask(hsv);
 
     detectBoxes(rgb_ptr->image, depth_ptr->image, red_mask, "Red");
     detectBoxes(rgb_ptr->image, depth_ptr->image, blue_mask, "Blue");
 
     cv::imshow("RGB Detection", rgb_ptr->image);
+
+    cv::Mat depth_vis;
+    depth_ptr->image.convertTo(depth_vis, CV_8UC1, 255.0 / 5.0);
+    cv::applyColorMap(depth_vis, depth_vis, cv::COLORMAP_JET);
+    cv::imshow("Depth View", depth_vis);
+
     cv::waitKey(1);
 
   } catch (const cv_bridge::Exception& e) {
     RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
   }
+}
+
+cv::Mat BoxDetector::createRedMask(const cv::Mat& hsv)
+{
+  cv::Mat mask1, mask2, red_mask;
+  cv::inRange(hsv, cv::Scalar(0, 70, 50), cv::Scalar(10, 255, 255), mask1);
+  cv::inRange(hsv, cv::Scalar(170, 70, 50), cv::Scalar(180, 255, 255), mask2);
+  cv::bitwise_or(mask1, mask2, red_mask);
+  return red_mask;
+}
+
+cv::Mat BoxDetector::createBlueMask(const cv::Mat& hsv)
+{
+  cv::Mat blue_mask;
+  cv::inRange(hsv, cv::Scalar(90, 50, 50), cv::Scalar(135, 255, 255), blue_mask);
+  return blue_mask;
 }
 
 void BoxDetector::detectBoxes(const cv::Mat& image, const cv::Mat& depth, const cv::Mat& mask, const std::string& color)
@@ -70,24 +89,16 @@ void BoxDetector::detectBoxes(const cv::Mat& image, const cv::Mat& depth, const 
 
     cv::RotatedRect rect = cv::minAreaRect(cnt);
     cv::Point2f center = rect.center;
-    float angle = rect.angle;
-    float w = rect.size.width;
-    float h = rect.size.height;
-
-    float size_px = std::max(w, h);
     int cx = static_cast<int>(center.x);
     int cy = static_cast<int>(center.y);
 
-    if (cx < 0 || cx >= depth.cols || cy < 0 || cy >= depth.rows) {
-      RCLCPP_WARN(this->get_logger(), "Invalid pixel index: (%d, %d)", cx, cy);
+    if (cx < 0 || cx >= depth.cols || cy < 0 || cy >= depth.rows)
       continue;
-    }
 
     float depth_val = depth.at<float>(cy, cx);
 
-    // Try to recover invalid depth using surrounding window
     if (depth_val <= 0.0f || std::isnan(depth_val) || std::isinf(depth_val)) {
-      const int window = 2;
+      const int window = 5;
       std::vector<float> valid_depths;
 
       for (int dy = -window; dy <= window; ++dy) {
@@ -104,10 +115,10 @@ void BoxDetector::detectBoxes(const cv::Mat& image, const cv::Mat& depth, const 
       }
 
       if (!valid_depths.empty()) {
-        depth_val = std::accumulate(valid_depths.begin(), valid_depths.end(), 0.0f) / valid_depths.size();
-        RCLCPP_WARN(this->get_logger(), "[%s] Recovered depth at (%d,%d): %f", color.c_str(), cx, cy, depth_val);
+        std::nth_element(valid_depths.begin(), valid_depths.begin() + valid_depths.size() / 2, valid_depths.end());
+        depth_val = valid_depths[valid_depths.size() / 2];
       } else {
-        RCLCPP_WARN(this->get_logger(), "[%s] No valid depth found near (%d,%d)", color.c_str(), cx, cy);
+        RCLCPP_WARN(this->get_logger(), "[%s] No valid depth near (%d, %d)", color.c_str(), cx, cy);
         continue;
       }
     }
@@ -115,6 +126,7 @@ void BoxDetector::detectBoxes(const cv::Mat& image, const cv::Mat& depth, const 
     float X = (center.x - cx_) * depth_val / fx_;
     float Y = (center.y - cy_) * depth_val / fy_;
     float Z = depth_val;
+    float size = estimateSize(std::max(rect.size.width, rect.size.height));
 
     geometry_msgs::msg::PoseStamped pose;
     pose.header.stamp = this->now();
@@ -123,20 +135,44 @@ void BoxDetector::detectBoxes(const cv::Mat& image, const cv::Mat& depth, const 
     pose.pose.position.y = Y;
     pose.pose.position.z = Z;
 
-    yawToQuaternion(-angle * M_PI / 180.0f, pose.pose.orientation);
-    pose_pub_->publish(pose);
+    yawToQuaternion(-rect.angle * M_PI / 180.0f, pose.pose.orientation);
+
+    try {
+      geometry_msgs::msg::PoseStamped base_pose;
+      base_pose = tf_buffer_->transform(pose, "base_link", tf2::durationFromSec(0.1));
+
+      RCLCPP_INFO(this->get_logger(),
+          "[%s Box] BASE Pose: [X=%.3f, Y=%.3f, Z=%.3f], Depth: %.3f, Yaw: %.2f, Size: %.3f m",
+          color.c_str(),
+          base_pose.pose.position.x,
+          base_pose.pose.position.y,
+          base_pose.pose.position.z,
+          depth_val,
+          rect.angle,
+          size);
+
+      pose_pub_->publish(base_pose);
+
+    } catch (const tf2::TransformException &ex) {
+      RCLCPP_WARN(this->get_logger(), "[%s Box] TF Transform to base_link failed: %s", color.c_str(), ex.what());
+    }
 
     std_msgs::msg::String info;
     std::ostringstream oss;
     oss << "{color:" << color
-        << ", size:" << estimateSize(size_px)
+        << ", size:" << size
         << ", depth:" << Z
-        << ", yaw:" << angle << "}";
+        << ", yaw:" << rect.angle << "}";
     info.data = oss.str();
     info_pub_->publish(info);
 
     cv::drawContours(image, std::vector<std::vector<cv::Point>>{cnt}, -1, cv::Scalar(0,255,0), 2);
-    cv::putText(image, color, center, cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1);
+    std::ostringstream label;
+    label << color << " "
+          << std::fixed << std::setprecision(2)
+          << size << "m "
+          << Z << "m";
+    cv::putText(image, label.str(), center, cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255), 1);
   }
 }
 

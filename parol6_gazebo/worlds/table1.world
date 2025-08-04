@@ -2371,26 +2371,58 @@
 
     <model name="intel_d435_camera">
       <static>true</static>
-      <pose>-0.170649 -1.081887 1.088560 3.1416 1.5708 0</pose>
+      <pose>-0.120848 -1.015532 1.459546 2.611174 1.449057 -0.551370</pose> <!-- world pose -->
 
       <link name="camera_link">
         <pose>0 0 0 0 0 0</pose>
+
         <inertial>
           <mass>0.001</mass>
           <inertia>
-            <ixx>1e-6</ixx><iyy>1e-6</iyy><izz>1e-6</izz>
-            <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+            <ixx>1e-6</ixx>
+            <iyy>1e-6</iyy>
+            <izz>1e-6</izz>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyz>0</iyz>
           </inertia>
         </inertial>
 
+        <!-- Corrected Mesh Pose -->
+        <visual name="camera_visual">
+          <pose>0 0 0 -1.796163 -0.000120 1.565815</pose>
+          <geometry>
+            <mesh>
+              <uri>model://intel_d435_camera/meshes/NAVRS.STL</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+        </visual>
+
+        <collision name="camera_collision">
+          <pose>0 0 0 -1.796163 -0.000120 1.565815</pose>
+          <geometry>
+            <mesh>
+              <uri>model://intel_d435_camera/meshes/NAVRS.STL</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+        </collision>
+
+        <!-- RGB Camera Sensor -->
         <sensor name="d435_rgb" type="camera">
           <pose>0 0 0 0 0 0</pose>
           <camera>
             <horizontal_fov>1.39626</horizontal_fov>
             <image>
-              <width>640</width><height>480</height><format>R8G8B8</format>
+              <width>640</width>
+              <height>480</height>
+              <format>R8G8B8</format>
             </image>
-            <clip><near>0.1</near><far>10.0</far></clip>
+            <clip>
+              <near>0.1</near>
+              <far>10.0</far>
+            </clip>
           </camera>
           <plugin name="d435_rgb_plugin" filename="libgazebo_ros_camera.so">
             <ros>
@@ -2403,14 +2435,20 @@
           </plugin>
         </sensor>
 
+        <!-- Infrared Camera 1 -->
         <sensor name="d435_infra1" type="camera">
           <pose>0 0 0 0 0 0</pose>
           <camera>
             <horizontal_fov>1.39626</horizontal_fov>
             <image>
-              <width>640</width><height>480</height><format>L8</format>
+              <width>640</width>
+              <height>480</height>
+              <format>L8</format>
             </image>
-            <clip><near>0.1</near><far>10.0</far></clip>
+            <clip>
+              <near>0.1</near>
+              <far>10.0</far>
+            </clip>
           </camera>
           <plugin name="d435_infra1_plugin" filename="libgazebo_ros_camera.so">
             <ros>
@@ -2423,14 +2461,20 @@
           </plugin>
         </sensor>
 
+        <!-- Infrared Camera 2 -->
         <sensor name="d435_infra2" type="camera">
           <pose>0 0 0 0 0 0</pose>
           <camera>
             <horizontal_fov>1.39626</horizontal_fov>
             <image>
-              <width>640</width><height>480</height><format>L8</format>
+              <width>640</width>
+              <height>480</height>
+              <format>L8</format>
             </image>
-            <clip><near>0.1</near><far>10.0</far></clip>
+            <clip>
+              <near>0.1</near>
+              <far>10.0</far>
+            </clip>
           </camera>
           <plugin name="d435_infra2_plugin" filename="libgazebo_ros_camera.so">
             <ros>
@@ -2443,14 +2487,20 @@
           </plugin>
         </sensor>
 
+        <!-- Depth Sensor -->
         <sensor name="d435_depth" type="depth">
           <pose>0 0 0 0 0 0</pose>
           <camera>
             <horizontal_fov>1.39626</horizontal_fov>
             <image>
-              <width>640</width><height>480</height><format>R8G8B8</format>
+              <width>640</width>
+              <height>480</height>
+              <format>R8G8B8</format>
             </image>
-            <clip><near>0.1</near><far>10.0</far></clip>
+            <clip>
+              <near>0.1</near>
+              <far>10.0</far>
+            </clip>
           </camera>
           <plugin name="d435_depth_plugin" filename="libgazebo_ros_camera.so">
             <ros>
@@ -2471,6 +2521,7 @@
         </sensor>
       </link>
 
+      <!-- Optical Frames -->
       <link name="camera_depth_optical_frame"/>
       <joint name="camera_depth_optical_joint" type="fixed">
         <parent>camera_link</parent>
@@ -2484,8 +2535,8 @@
         <child>camera_rgb_optical_frame</child>
         <pose>0 0 0 -1.5708 0 -1.5708</pose>
       </joint>
-
     </model>
+
 
 
 

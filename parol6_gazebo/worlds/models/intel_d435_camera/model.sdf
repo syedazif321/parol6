@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="intel_d435_camera">
+    <static>true</static>
+    <link name="camera_link">
+      <visual name="camera_visual">
+        <geometry>
+          <mesh>
+            <uri>model://intel_d435_camera/meshes/NAVRS.STL</uri>
+            <scale>0.001 0.001 0.001</scale>
+          </mesh>
+        </geometry>
+      </visual>
+      <collision name="camera_collision">
+        <geometry>
+          <mesh>
+            <uri>model://intel_d435_camera/meshes/NAVRS.STL</uri>
+            <scale>0.001 0.001 0.001</scale>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>

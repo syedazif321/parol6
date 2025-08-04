@@ -159,7 +159,7 @@ def generate_launch_description():
         executable='static_transform_publisher',
         name='tf_camera_mount',
         arguments=[
-            '-0.170649', '-1.081887', '1.088560', '3.1416', '1.5708', '0',
+            '0.176781', '-1.054864', '1.436196', '3.1416', '1.247909', '0',
             'world', 'camera_link'
         ]
     )
