@@ -159,30 +159,15 @@ def generate_launch_description():
         executable='static_transform_publisher',
         name='tf_camera_mount',
         arguments=[
-            '0.176781', '-1.054864', '1.436196', '3.1416', '1.247909', '0',
-            'world', 'camera_link'
+            '0', '0', '0',     # xyz
+            '-1.5708', '0', '-1.5708',       # rpy → converted correctly!
+            'world', 'realsense_rgb_frame'  
         ]
     )
 
-    static_tf_rgb_optical = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='tf_camera_rgb_optical',
-        arguments=[
-            '0', '0', '0', '-1.5708', '0', '-1.5708',
-            'camera_link', 'camera_rgb_optical_frame'
-        ]
-    )
 
-    static_tf_depth_optical = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='tf_camera_depth_optical',
-        arguments=[
-            '0', '0', '0', '-1.5708', '0', '-1.5708',
-            'camera_link', 'camera_depth_optical_frame'
-        ]
-    )
+
+
 
 
 
@@ -197,6 +182,5 @@ def generate_launch_description():
         rviz_node,
         servo_node,
         static_tf_camera_mount,
-        static_tf_rgb_optical,
-        static_tf_depth_optical,
+
     ])

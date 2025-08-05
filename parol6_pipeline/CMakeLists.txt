@@ -12,6 +12,8 @@ find_package(image_transport REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(message_filters REQUIRED)
+find_package(moveit_ros_planning_interface REQUIRED)
+
 
 
 include_directories(
@@ -25,12 +27,12 @@ ament_target_dependencies(box_detector_node
   tf2 tf2_geometry_msgs message_filters
 )
 
-# add_executable(pick_controller_node src/pick_controller.cpp)
-# ament_target_dependencies(pick_controller_node rclcpp geometry_msgs std_msgs)
+add_executable(pick_controller_node src/pick_controller.cpp)
+ament_target_dependencies(pick_controller_node rclcpp geometry_msgs std_msgs moveit_ros_planning_interface)
 
 install(TARGETS
   box_detector_node
-  # pick_controller_node
+  pick_controller_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -39,5 +41,10 @@ install(TARGETS
 install(DIRECTORY include/
   DESTINATION include/
 )
+install(
+  DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
+)
+
 
 ament_package()
