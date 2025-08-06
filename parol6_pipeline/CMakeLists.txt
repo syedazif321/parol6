@@ -1,13 +1,11 @@
 cmake_minimum_required(VERSION 3.8)
 project(parol6_pipeline)
 
-# C++ Standard
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Dependencies
-# ──────────────────────────────────────────────────────────────────────────────
+
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -22,17 +20,13 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Includes
-# ──────────────────────────────────────────────────────────────────────────────
+
 include_directories(
   include
   ${OpenCV_INCLUDE_DIRS}
 )
 
-# ──────────────────────────────────────────────────────────────────────────────
-# box_detector_node
-# ──────────────────────────────────────────────────────────────────────────────
+
 add_executable(box_detector_node src/box_detector.cpp)
 
 ament_target_dependencies(box_detector_node
@@ -56,9 +50,7 @@ target_link_libraries(box_detector_node
   tf2_geometry_msgs::tf2_geometry_msgs
 )
 
-# ──────────────────────────────────────────────────────────────────────────────
-# pick_controller_node
-# ──────────────────────────────────────────────────────────────────────────────
+
 add_executable(pick_controller_node src/pick_controller.cpp)
 
 ament_target_dependencies(pick_controller_node
@@ -66,11 +58,18 @@ ament_target_dependencies(pick_controller_node
   geometry_msgs
   std_msgs
   moveit_ros_planning_interface
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
 )
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Install Targets
-# ──────────────────────────────────────────────────────────────────────────────
+target_link_libraries(pick_controller_node
+  tf2::tf2
+  tf2_ros::tf2_ros
+  tf2_geometry_msgs::tf2_geometry_msgs
+)
+
+
 install(TARGETS
   box_detector_node
   pick_controller_node

@@ -2,7 +2,8 @@
 <robot name="parol6">
 
   <!-- Fixed joint from world to base -->
-  <virtual_joint name="virtual_joint" type="fixed" parent_frame="world" child_link="base_link" />
+  <virtual_joint name="virtual_joint" type="fixed" parent_frame="base_link" child_link="base_link" />
+<!-- <virtual_joint name="virtual_joint" type="fixed" parent_frame="world" child_link="base_link" /> -->
 
   <!-- Arm group definition -->
   <group name="arm">
@@ -26,7 +27,8 @@
     <joint name="tool0_fixed"/>
 
     <!-- Chain updated to tip at tool0 -->
-    <chain base_link="base_link" tip_link="tool0"/>
+    <chain base_link="base_link" tip_link="suction_gripper"/>
+        <!-- <chain base_link="base_link" tip_link="tool0"/> -->
   </group>
 
   <!-- Initial joint values -->

@@ -112,9 +112,17 @@ def generate_launch_description():
             .planning_pipelines(pipelines=["ompl"])
             .to_moveit_configs()
             .to_dict(),
-            {"use_sim_time": use_sim}
+            {"use_sim_time": use_sim},
+            {"planning_scene_monitor.publish_planning_scene": True},
+            {"planning_scene_monitor.publish_geometry_updates": True},
+            {"planning_scene_monitor.publish_state_updates": True},
+            {"planning_scene_monitor.publish_transforms_updates": True},
         ],
+        arguments=["--ros-args", "--log-level", "move_group:=debug"], 
     )
+
+
+
 
     rviz_node = Node(
         package="rviz2",

@@ -26,7 +26,7 @@ BoxDetector::BoxDetector()
   sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(SyncPolicy(10), *rgb_sub_, *depth_sub_);
   sync_->registerCallback(std::bind(&BoxDetector::imageCallback, this, std::placeholders::_1, std::placeholders::_2));
 
-  RCLCPP_INFO(get_logger(), "BoxDetector initialized");
+  RCLCPP_INFO(get_logger(), "✅ BoxDetector initialized");
 }
 
 void BoxDetector::imageCallback(
@@ -43,7 +43,7 @@ void BoxDetector::imageCallback(
     detectBoxes(rgb_ptr->image, depth_ptr->image, createRedMask(hsv), "Red");
     detectBoxes(rgb_ptr->image, depth_ptr->image, createBlueMask(hsv), "Blue");
 
-    // Show debug views
+    // Debug views
     cv::imshow("RGB Detection", rgb_ptr->image);
     cv::Mat depth_vis;
     depth_ptr->image.convertTo(depth_vis, CV_8UC1, 255.0 / 5.0);
@@ -76,7 +76,6 @@ void BoxDetector::detectBoxes(const cv::Mat& image, const cv::Mat& depth, const 
     if (!std::isfinite(depth_val) || depth_val <= 0.0f) {
       const int window = 5;
       std::vector<float> valid;
-
       for (int dy = -window; dy <= window; ++dy) {
         for (int dx = -window; dx <= window; ++dx) {
           int nx = cx + dx, ny = cy + dy;
@@ -87,7 +86,6 @@ void BoxDetector::detectBoxes(const cv::Mat& image, const cv::Mat& depth, const 
           }
         }
       }
-
       if (!valid.empty()) {
         std::nth_element(valid.begin(), valid.begin() + valid.size()/2, valid.end());
         depth_val = valid[valid.size()/2];
@@ -99,7 +97,7 @@ void BoxDetector::detectBoxes(const cv::Mat& image, const cv::Mat& depth, const 
 
     float X = (center.x - cx_) * depth_val / fx_;
     float Y = (center.y - cy_) * depth_val / fy_;
-    float Z = depth_val;
+    float Z = depth_val + 0.05f;  // ↑ safe margin
     float size = estimateSize(std::max(rect.size.width, rect.size.height));
 
     geometry_msgs::msg::PoseStamped pose;
@@ -109,6 +107,16 @@ void BoxDetector::detectBoxes(const cv::Mat& image, const cv::Mat& depth, const 
     pose.pose.position.y = Y;
     pose.pose.position.z = Z;
     yawToQuaternion(-rect.angle * M_PI / 180.0f, pose.pose.orientation);
+
+    double norm = std::sqrt(
+      pose.pose.orientation.x * pose.pose.orientation.x +
+      pose.pose.orientation.y * pose.pose.orientation.y +
+      pose.pose.orientation.z * pose.pose.orientation.z +
+      pose.pose.orientation.w * pose.pose.orientation.w);
+
+    if (std::abs(norm - 1.0) > 0.05) {
+      RCLCPP_WARN(get_logger(), "[%s] Orientation quaternion is not normalized. Norm: %.4f", color.c_str(), norm);
+    }
 
     try {
       auto base_pose = tf_buffer_->transform(pose, "base_link", tf2::durationFromSec(0.1));
@@ -126,6 +134,7 @@ void BoxDetector::detectBoxes(const cv::Mat& image, const cv::Mat& depth, const 
       RCLCPP_WARN(get_logger(), "[%s] TF error: %s", color.c_str(), ex.what());
     }
 
+    // Draw debug overlay
     if (std::isfinite(center.x) && std::isfinite(center.y)) {
       if (center.x >= 0 && center.x < image.cols && center.y >= 0 && center.y < image.rows) {
         cv::drawContours(image, std::vector<std::vector<cv::Point>>{cnt}, -1, {0,255,0}, 2);
@@ -151,7 +160,14 @@ void BoxDetector::yawToQuaternion(float yaw, geometry_msgs::msg::Quaternion &q)
   q.y = 0.0;
   q.z = sin(yaw / 2.0);
   q.w = cos(yaw / 2.0);
+
+  double norm = std::sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
+  q.x /= norm;
+  q.y /= norm;
+  q.z /= norm;
+  q.w /= norm;
 }
+
 cv::Mat BoxDetector::createRedMask(const cv::Mat& hsv)
 {
   cv::Mat mask1, mask2, red_mask;
@@ -167,7 +183,6 @@ cv::Mat BoxDetector::createBlueMask(const cv::Mat& hsv)
   cv::inRange(hsv, cv::Scalar(90, 50, 50), cv::Scalar(135, 255, 255), blue_mask);
   return blue_mask;
 }
-
 
 int main(int argc, char** argv)
 {
