@@ -7,14 +7,13 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <cv_bridge/cv_bridge.h>
+
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
-
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
-
 
 class BoxDetector : public rclcpp::Node
 {
@@ -40,7 +39,6 @@ private:
 
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-
 
   using SyncPolicy = message_filters::sync_policies::ApproximateTime<
     sensor_msgs::msg::Image, sensor_msgs::msg::Image>;

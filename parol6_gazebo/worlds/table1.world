@@ -2381,7 +2381,7 @@
             <iyz>0</iyz>
             <izz>8.931e-05</izz>
           </inertia>
-          <pose>0 0 0 0 -0 0</pose>
+          <pose>0 0 0 1.57 0 1.57</pose>
         </inertial>
         <collision name='collision'>
           <geometry>
@@ -2457,9 +2457,13 @@
         <enable_wind>0</enable_wind>
         <kinematic>0</kinematic>
       </link>
-      
+      <!-- <plugin name='rgb_camera_controller' filename='libgazebo_ros_camera.so'>
+        <camera_name>camera</camera_name>
+        <frame_name>realsense_rgb_camera</frame_name> 
+      </plugin> -->
+
       <static>1</static>
-      <pose>0.128565 -1.097241 1.312280 0.968163 -0 -1.590079</pose>
+      <pose>0.128565 -1.097241 1.312280 1.57 0 1.57</pose>
     </model>
 
 

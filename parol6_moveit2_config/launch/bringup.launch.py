@@ -159,8 +159,8 @@ def generate_launch_description():
         executable='static_transform_publisher',
         name='tf_camera_mount',
         arguments=[
-            '0', '0', '0',     # xyz
-            '-1.5708', '0', '-1.5708',       # rpy → converted correctly!
+            '0.128565', '-1.097241', '1.312280',
+            '-1.57',  '0',  '3.14',
             'world', 'realsense_rgb_frame'  
         ]
     )
