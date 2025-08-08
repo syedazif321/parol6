@@ -67,7 +67,7 @@
       <parent link="base_link" />
       <child link="L1" />
       <axis xyz="0 0 1" />
-      <limit lower="-3.14" upper="3.14" effort="0" velocity="0" />
+      <limit lower="-3.14" upper="3.14" effort="10" velocity="1.0" />
   </joint>
 
   <link name="L2">
@@ -100,7 +100,7 @@
       <parent link="L1" />
       <child link="L2" />
       <axis xyz="0 0 1" />
-      <limit lower="-1.57" upper="1.57" effort="0" velocity="0" />
+      <limit lower="-1.57" upper="1.57" effort="10" velocity="1.0" />
   </joint>
 
   <link name="L3">
@@ -133,7 +133,7 @@
       <parent link="L2" />
       <child link="L3" />
       <axis xyz="0 0 -1" />
-      <limit lower="-1.57" upper="1.57" effort="0" velocity="0" />
+      <limit lower="-1.57" upper="1.57" effort="10" velocity="1.0" />
   </joint>
 
   <link name="L4">
@@ -165,7 +165,7 @@
       <parent link="L3" />
       <child link="L4" />
       <axis xyz="0 0 1" />
-      <limit lower="-1.57" upper="1.57" effort="0" velocity="0" />
+      <limit lower="-1.57" upper="1.57" effort="10" velocity="1.0" />
   </joint>
 
   <link name="L5">
@@ -199,7 +199,7 @@
       <parent link="L4" />
       <child link="L5" />
       <axis xyz="0 0 -1" />
-        <limit lower="-1.57" upper="1.57" effort="0" velocity="0" />
+        <limit lower="-1.57" upper="1.57" effort="10" velocity="1.0" />
   </joint>
 
   <link name="L6">
@@ -233,7 +233,7 @@
       <parent link="L5" />
       <child link="L6" />
       <axis xyz="0 0 -1" />
-      <limit lower="0" upper="0" effort="0" velocity="0" />
+      <limit lower="-1.57" upper="1.57" effort="10" velocity="1.0" />
   </joint>
 
 

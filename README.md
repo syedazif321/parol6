@@ -32,3 +32,60 @@ ros2 service call /spawn_box std_srvs/srv/Trigger
 
 ros2 service call /AttachDetach msg_gazebo/srv/AttachDetach \
   "{model1: 'parol6', link1: 'L6', model2: 'Red_1', link2: 'link', attach: true}"
+
+
+
+ros2 param set /move_group arm.kinematics_solver kdl_kinematics_plugin/KDLKinematicsPlugin
+
+ros2 param set /move_group arm.kinematics_solver_timeout 0.05
+ros2 param set /move_group arm.kinematics_solver_attempts 5
+ros2 param set /move_group arm.kinematics_solver_search_resolution 0.005
+
+azif@azif:~/projetcs/parol6$ ros2 topic echo /detected_box_pose --once 
+header:
+  stamp:
+    sec: 1754561418
+    nanosec: 84726035
+  frame_id: base_link
+pose:
+  position:
+    x: 0.5422454328699826
+    y: 0.07943160904603358
+    z: 0.020987296679036538
+  orientation:
+    x: 0.9850946354014032
+    y: -0.17201140999115824
+    z: -0.0007843480920685094
+    w: 0.0001376019647234278
+
+
+
+      pose: {
+    position: {
+      x: 0.4419158783051373,
+      y: 0.08867201398535185,
+      z: 0.1957374591062092
+    },
+    orientation: {
+      x: 0.7096465625406891,
+      y: 0.00081043727815465,
+      z: -0.7045544569662532,
+      w: 0.00202894913455497
+    }
+  }
+
+
+        "box1": [
+        0.19802173457379446,
+        0.8001236248778865,
+        0.060721036579216126,
+        -0.25195117499927466,
+        -0.88404622879548,
+        -0.16494299953626967
+
+
+}"
+
+
+
+
