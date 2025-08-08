@@ -173,6 +173,23 @@ def generate_launch_description():
         ]
     )
 
+    pick_controller_node = Node(
+        package="parol6_pipeline",
+        executable="pick_controller_node",
+        name="pick_controller",
+        output="screen",
+        parameters=[
+            robot_description,
+            robot_description_semantic,
+            {"robot_description_kinematics": kinematics_yaml},
+            joint_limits,
+            {"use_sim_time": use_sim} 
+        ],
+        remappings=[
+
+        ]
+    )
+
 
 
 
@@ -190,5 +207,6 @@ def generate_launch_description():
         rviz_node,
         servo_node,
         static_tf_camera_mount,
+        pick_controller_node,
 
     ])

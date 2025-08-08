@@ -28,7 +28,7 @@ BoxDetector::BoxDetector()
   sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(SyncPolicy(10), *rgb_sub_, *depth_sub_);
   sync_->registerCallback(std::bind(&BoxDetector::imageCallback, this, std::placeholders::_1, std::placeholders::_2));
 
-  RCLCPP_INFO(get_logger(), "✅ BoxDetector initialized with TF broadcaster");
+  RCLCPP_INFO(get_logger(), " BoxDetector initialized with TF broadcaster");
 }
 
 void BoxDetector::imageCallback(

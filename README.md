@@ -101,5 +101,5 @@ ros2 topic pub /detected_box_pose geometry_msgs/msg/PoseStamped "{
   }
 }"
 
-
+ros2 service call /start_picking std_srvs/srv/Trigger "{}"
 

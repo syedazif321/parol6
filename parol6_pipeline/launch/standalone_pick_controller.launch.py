@@ -10,7 +10,6 @@ def load_yaml(pkg, file_path):
         return yaml.safe_load(f)
 
 def generate_launch_description():
-    # Load URDF
     urdf_path = os.path.join(
         get_package_share_directory("parol6_description"),
         "urdf", "parol6.urdf.xacro"
@@ -18,7 +17,6 @@ def generate_launch_description():
     robot_description_config = xacro.process_file(urdf_path)
     robot_description = {'robot_description': robot_description_config.toxml()}
 
-    # Load SRDF
     srdf_path = os.path.join(
         get_package_share_directory("parol6_moveit2_config"),
         "config", "parol6.srdf"
@@ -26,7 +24,6 @@ def generate_launch_description():
     with open(srdf_path, 'r') as f:
         robot_description_semantic = {'robot_description_semantic': f.read()}
 
-    # Kinematics & joint limits
     kinematics = load_yaml("parol6_moveit2_config", "config/kinematics.yaml")
     joint_limits = load_yaml("parol6_moveit2_config", "config/joint_limits.yaml")
 
