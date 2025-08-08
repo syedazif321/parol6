@@ -14,6 +14,7 @@
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>  
 
 class BoxDetector : public rclcpp::Node
 {
@@ -39,6 +40,7 @@ private:
 
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+  std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_; 
 
   using SyncPolicy = message_filters::sync_policies::ApproximateTime<
     sensor_msgs::msg::Image, sensor_msgs::msg::Image>;

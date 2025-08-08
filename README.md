@@ -89,3 +89,17 @@ pose:
 
 
 
+
+ros2 topic pub /detected_box_pose geometry_msgs/msg/PoseStamped "{header: {frame_id: 'base_link'}, pose: {position: {x: 0.4,y: 0.2, z: 0.2}, orientation: {x: 1.0, y: 0.5, z: -4.0, w: 1.0}}}
+
+
+ros2 topic pub /detected_box_pose geometry_msgs/msg/PoseStamped "{
+  header: {frame_id: 'base_link'},
+  pose: {
+    position: {x: 0.4, y: 0.0, z: 0.2},
+    orientation: {x: 0.0, y: 0.7071, z: 0.0, w: 0.7071}
+  }
+}"
+
+
+
