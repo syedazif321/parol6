@@ -9,7 +9,8 @@
 
 #include <fstream>
 #include <string>
-#include <cstdlib>
+#include <thread>
+#include <mutex>
 
 using json = nlohmann::json;
 
@@ -21,30 +22,22 @@ public:
     RCLCPP_INFO(get_logger(), "Pipeline node started. Press Enter to begin...");
     std::cin.get();
 
-    if (!spawn_box()) {
-      RCLCPP_ERROR(get_logger(), "Failed to spawn box.");
-      return;
-    }
+    if (!spawn_box()) return;
+    
+    // Delay 1 sec after spawn
+    RCLCPP_INFO(get_logger(), "⏳ Waiting 1 second after spawning box...");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    if (!move_conveyor("conveyor2", 0.65)) {
-      RCLCPP_ERROR(get_logger(), "Failed to move conveyor2.");
-      return;
-    }
+    if (!move_conveyor("conveyor2", 0.65)) return;
 
-    if (!detect_box()) {
-      RCLCPP_ERROR(get_logger(), "Box detection failed.");
-      return;
-    }
+    // Delay 2 sec before starting vision
+    RCLCPP_INFO(get_logger(), "⏳ Waiting 2 seconds before starting vision...");
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
-    if (!start_picking()) {
-      RCLCPP_ERROR(get_logger(), "Picking failed.");
-      return;
-    }
+    if (!detect_box()) return;
 
-    if (!attach_object(true)) {
-      RCLCPP_ERROR(get_logger(), "Attach failed.");
-      return;
-    }
+    if (!start_picking()) return;
+    if (!attach_object(true)) return;
 
     std::string target_conveyor = get_target_conveyor(box_color_);
     if (target_conveyor.empty()) {
@@ -52,36 +45,31 @@ public:
       return;
     }
 
-    if (!move_to_named_target(target_conveyor)) {
-      RCLCPP_ERROR(get_logger(), "Failed to move to %s", target_conveyor.c_str());
-      return;
-    }
-
-    if (!attach_object(false)) {
-      RCLCPP_ERROR(get_logger(), "Detach failed.");
-      return;
-    }
-
-    if (!move_conveyor(target_conveyor, 0.65)) {
-      RCLCPP_ERROR(get_logger(), "Failed to move target conveyor: %s", target_conveyor.c_str());
-      return;
-    }
+    if (!move_to_named_target(target_conveyor)) return;
+    if (!attach_object(false)) return;
+    if (!move_conveyor(target_conveyor, 0.65)) return;
 
     RCLCPP_INFO(get_logger(), "✅ Pipeline completed! Box '%s' delivered to %s.",
                 spawned_box_name_.c_str(), target_conveyor.c_str());
   }
 
 private:
-  std::string spawned_box_name_;
+  std::string spawned_box_name_ = "Red_1";
   std::string box_color_ = "red";
 
-  // === Service Clients ===
+  // Clients
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr spawn_client_;
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr detect_client_;
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr pick_client_;
   rclcpp::Client<conveyorbelt_msgs::srv::MoveDistance>::SharedPtr conveyor_client_;
   rclcpp::Client<msg_gazebo::srv::AttachDetach>::SharedPtr attach_client_;
 
-  // === MoveIt ===
   std::shared_ptr<moveit::planning_interface::MoveGroupInterface> move_group_;
+
+  // Detection sync
+  geometry_msgs::msg::PoseStamped::SharedPtr latest_pose_;
+  std::mutex pose_mutex_;
+  bool box_detected_ = false;
 
   bool spawn_box()
   {
@@ -104,9 +92,8 @@ private:
       return false;
     }
 
-    // In real system, parse from response. For now, hardcode.
-    spawned_box_name_ = "Red_1";  // or "Blue_1"
-    box_color_ = (spawned_box_name_.find("Red") != std::string::npos) ? "red" : "blue";
+    box_color_ = "red";  // In real system, parse from response
+    spawned_box_name_ = "Red_1";
     RCLCPP_INFO(get_logger(), "Spawned box: %s (color: %s)", spawned_box_name_.c_str(), box_color_.c_str());
     return true;
   }
@@ -140,26 +127,88 @@ private:
 
   bool detect_box()
   {
-    RCLCPP_INFO(get_logger(), "Running box_detector_node...");
-    int ret = std::system("ros2 run parol6_pipeline box_detector_node");
-    if (ret != 0) {
-      RCLCPP_ERROR(get_logger(), "box_detector_node failed!");
+    RCLCPP_INFO(get_logger(), "🔍 Starting vision phase in 2 seconds...");
+
+    // Subscribe to /detected_box_pose
+    auto sub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+      "/detected_box_pose",
+      10,
+      [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
+        std::lock_guard<std::mutex> lock(pose_mutex_);
+        latest_pose_ = msg;
+        box_detected_ = true;
+        RCLCPP_INFO_ONCE(get_logger(), "📸 Detected box pose in '%s'", msg->header.frame_id.c_str());
+      });
+
+    // Create detection clients
+    detect_client_ = this->create_client<std_srvs::srv::Trigger>("/start_detection");
+    auto stop_client = this->create_client<std_srvs::srv::Trigger>("/stop_detection");
+
+    // Wait for /start_detection
+    if (!detect_client_->wait_for_service(std::chrono::seconds(5))) {
+      RCLCPP_ERROR(get_logger(), "Service /start_detection not available. Is box_detector_node running?");
       return false;
     }
-    RCLCPP_INFO(get_logger(), "Box detection completed.");
+
+    // Start detection
+    auto start_req = std::make_shared<std_srvs::srv::Trigger::Request>();
+    auto start_future = detect_client_->async_send_request(start_req);
+    if (rclcpp::spin_until_future_complete(this->get_node_base_interface(), start_future) !=
+        rclcpp::FutureReturnCode::SUCCESS) {
+      RCLCPP_ERROR(get_logger(), "Failed to call /start_detection");
+      return false;
+    }
+
+    auto start_result = start_future.get();
+    if (!start_result->success) {
+      RCLCPP_ERROR(get_logger(), "Start detection failed: %s", start_result->message.c_str());
+      return false;
+    }
+
+    RCLCPP_INFO(get_logger(), "👁️  Vision started. Waiting up to 2 seconds for a box...");
+
+    // Wait up to 2 seconds for a box
+    auto start_time = this->now();
+    while (rclcpp::ok() && !box_detected_) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      if ((this->now() - start_time).seconds() >= 2.0) {
+        break;
+      }
+    }
+
+    // Always stop detection
+    if (!stop_client->wait_for_service(std::chrono::seconds(3))) {
+      RCLCPP_WARN(get_logger(), "Service /stop_detection not available.");
+    } else {
+      auto stop_req = std::make_shared<std_srvs::srv::Trigger::Request>();
+      auto stop_future = stop_client->async_send_request(stop_req);
+      rclcpp::spin_until_future_complete(this->get_node_base_interface(), stop_future);
+      RCLCPP_INFO(get_logger(), "🛑 Vision stopped after 2 seconds.");
+    }
+
+    // Check result
+    if (!box_detected_) {
+      RCLCPP_ERROR(get_logger(), "❌ No box detected during 2-second window.");
+      return false;
+    }
+
+    RCLCPP_INFO(get_logger(), "✅ Box detected at (%.3f, %.3f, %.3f)",
+                latest_pose_->pose.position.x,
+                latest_pose_->pose.position.y,
+                latest_pose_->pose.position.z);
     return true;
   }
 
   bool start_picking()
   {
-    auto client = this->create_client<std_srvs::srv::Trigger>("/start_picking");
-    if (!client->wait_for_service(std::chrono::seconds(5))) {
+    pick_client_ = this->create_client<std_srvs::srv::Trigger>("/start_picking");
+    if (!pick_client_->wait_for_service(std::chrono::seconds(5))) {
       RCLCPP_ERROR(get_logger(), "Service /start_picking not available.");
       return false;
     }
 
     auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
-    auto future = client->async_send_request(request);
+    auto future = pick_client_->async_send_request(request);
     if (rclcpp::spin_until_future_complete(this->get_node_base_interface(), future) != rclcpp::FutureReturnCode::SUCCESS) {
       RCLCPP_ERROR(get_logger(), "Failed to call /start_picking");
       return false;
@@ -210,7 +259,7 @@ private:
 
   std::string get_target_conveyor(const std::string& color)
   {
-    std::string json_path = "/home/azif/projetcs/parol6/robot_data/Targets.json";
+    std::string json_path = "/home/azif/projects/parol6/robot_data/Targets.json";  // Fixed typo: projetcs → projects
     std::ifstream f(json_path);
     if (!f.is_open()) {
       RCLCPP_ERROR(get_logger(), "Failed to open %s", json_path.c_str());
