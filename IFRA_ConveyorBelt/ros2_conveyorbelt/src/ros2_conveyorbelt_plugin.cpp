@@ -42,8 +42,7 @@ public:
 
   gazebo::event::ConnectionPtr update_connection_;
 
-  bool stepwise_mode_{false};  // Conveyor 2 special behavior
-
+  // Always use stepwise logic for all conveyors
   void PublishStatus();
   void SetConveyorPower(
     conveyorbelt_msgs::srv::ConveyorBeltControl::Request::SharedPtr,
@@ -76,12 +75,10 @@ void ROS2ConveyorBeltPlugin::Load(gazebo::physics::ModelPtr _model, sdf::Element
   impl_->update_ns_ = static_cast<int>((1.0 / publish_rate) * 1e9);
   impl_->limit_ = impl_->belt_joint_->UpperLimit();
 
-  const std::string ns = impl_->ros_node_->get_namespace();
-  if (ns.find("conveyor2") != std::string::npos) {
-    impl_->stepwise_mode_ = true;
-    RCLCPP_WARN(impl_->ros_node_->get_logger(), "Stepwise movement mode ENABLED for conveyor2");
-  }
+  // Always use stepwise logic — remove namespace check
+  RCLCPP_INFO(impl_->ros_node_->get_logger(), "Stepwise movement mode ENABLED for all conveyors");
 
+  const std::string ns = impl_->ros_node_->get_namespace();
   std::string topic_name = ns + "/CONVEYORSTATE";
   std::string power_srv = ns + "/CONVEYORPOWER";
   std::string move_srv = ns + "/MoveDistance";
@@ -109,32 +106,35 @@ void ROS2ConveyorBeltPluginPrivate::OnUpdate()
   double current_position = belt_joint_->Position(0);
 
   if (move_active_) {
+    // Check if we've reached the current step target
     if (std::abs(current_position - target_position_) < 0.0005) {
+      // Stop and reset joint position
       belt_joint_->SetVelocity(0, 0.0);
       SoftResetJointPosition();
 
-      if (stepwise_mode_) {
-        remaining_distance_ -= std::abs(current_position);
-        if (remaining_distance_ <= 0.0005) {
-          move_active_ = false;
-          RCLCPP_INFO(ros_node_->get_logger(), "[Conveyor2] All distance moved. Done.");
-        } else {
-          double step = std::min(limit_, remaining_distance_);
-          target_position_ = step;
-          RCLCPP_INFO(ros_node_->get_logger(), "[Conveyor2] Next step: Target=%.4f Remaining=%.4f", target_position_, remaining_distance_);
-        }
-      } else {
+      // Decrease remaining distance by the step size (which was |target_position_| since we start from 0)
+      remaining_distance_ -= std::abs(target_position_);
+
+      if (remaining_distance_ <= 0.0005) {
         move_active_ = false;
-        RCLCPP_INFO(ros_node_->get_logger(), "Target distance reached. Joint reset to 0.0");
+        RCLCPP_INFO(ros_node_->get_logger(), "All distance moved. Done.");
+      } else {
+        // Plan next step
+        double step = std::min(limit_, remaining_distance_);
+        target_position_ = step;
+        RCLCPP_DEBUG(ros_node_->get_logger(), "Next step: Target=%.4f, Remaining=%.4f", target_position_, remaining_distance_);
       }
     } else {
+      // Move toward current step target
       double dir = (target_position_ > current_position) ? 1.0 : -1.0;
       belt_joint_->SetVelocity(0, dir * move_velocity_);
     }
   } else {
+    // Normal power-based movement
     belt_joint_->SetVelocity(0, belt_velocity_);
   }
 
+  // Publish status at desired rate
   rclcpp::Time now = ros_node_->get_clock()->now();
   if ((now - last_publish_time_).nanoseconds() >= update_ns_) {
     PublishStatus();
@@ -144,8 +144,11 @@ void ROS2ConveyorBeltPluginPrivate::OnUpdate()
 
 void ROS2ConveyorBeltPluginPrivate::SoftResetJointPosition()
 {
+  // Stop motion
   belt_joint_->SetVelocity(0, 0.0);
+  // Reset position to 0 (soft reset)
   belt_joint_->SetPosition(0, 0.0);
+  // Ensure velocity stays zero after reset
   belt_joint_->SetVelocity(0, 0.0);
 }
 
@@ -156,6 +159,7 @@ void ROS2ConveyorBeltPluginPrivate::SetConveyorPower(
   if (req->power >= 0 && req->power <= 100) {
     power_ = req->power;
     belt_velocity_ = max_velocity_ * (power_ / 100.0);
+    // Disable move mode when setting power
     move_active_ = false;
     res->success = true;
   } else {
@@ -174,35 +178,17 @@ void ROS2ConveyorBeltPluginPrivate::MoveDistance(
     return;
   }
 
-  if (stepwise_mode_) {
-    remaining_distance_ = req->distance;
-    move_velocity_ = 0.2 * max_velocity_;
-    belt_velocity_ = 0.0;
-    move_active_ = true;
-    target_position_ = std::min(limit_, remaining_distance_);
+  // Always use stepwise logic
+  remaining_distance_ = req->distance;
+  move_velocity_ = 0.2 * max_velocity_;  // Slower speed for precision
+  belt_velocity_ = 0.0;
+  move_active_ = true;
 
-    res->success = true;
-    RCLCPP_INFO(ros_node_->get_logger(), "[Conveyor2] Stepwise move start: Total=%.3f Step=%.3f", req->distance, target_position_);
-  } else {
-    double curr = belt_joint_->Position(0);
-    target_position_ = curr + req->distance;
+  // First step: move up to limit or remaining distance
+  target_position_ = std::min(limit_, remaining_distance_);
 
-    if (target_position_ < 0.0) target_position_ = 0.0;
-    if (target_position_ > limit_) target_position_ = limit_;
-
-    if (std::abs(curr - target_position_) < 0.0005) {
-      RCLCPP_WARN(ros_node_->get_logger(), "Target already reached or too small move. Ignoring.");
-      res->success = false;
-      return;
-    }
-
-    move_velocity_ = 0.5 * max_velocity_;
-    move_active_ = true;
-    belt_velocity_ = 0.0;
-    res->success = true;
-
-    RCLCPP_INFO(ros_node_->get_logger(), "MoveDistance: %.3f → Target: %.4f Speed: %.2f", req->distance, target_position_, move_velocity_);
-  }
+  res->success = true;
+  RCLCPP_INFO(ros_node_->get_logger(), "Stepwise move start: Total=%.3f, First Step=%.3f", req->distance, target_position_);
 }
 
 void ROS2ConveyorBeltPluginPrivate::PublishStatus()

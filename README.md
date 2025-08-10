@@ -3,21 +3,7 @@ export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/home/azif/projetcs/parol6/install/p
 export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/home/azif/projetcs/parol6/install/parol6_description/share/parol6_description
 
 
-ros2 topic pub -r 10 /servo_node/delta_twist_cmds geometry_msgs/TwistStamped -- \
-"header:
-  stamp:
-    sec: $(date +%s)
-    nanosec: 0
-  frame_id: 'base_link'
-twist:
-  linear:
-    x: 0.1
-    y: 0.1
-    z: 0.0
-  angular:
-    x: 0.0
-    y: 0.0
-    z: 0.0"
+export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$(ros2 pkg prefix parol6_description)/share
 
 
 
@@ -102,4 +88,6 @@ ros2 topic pub /detected_box_pose geometry_msgs/msg/PoseStamped "{
 }"
 
 ros2 service call /start_picking std_srvs/srv/Trigger "{}"
+ros2 run parol6_pipeline pipeline_node
+ros2 service call /start_detection std_srvs/srv/Trigger "{}"
 
