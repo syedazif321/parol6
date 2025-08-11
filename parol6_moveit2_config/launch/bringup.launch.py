@@ -190,13 +190,6 @@ def generate_launch_description():
         ]
     )
 
-
-
-
-
-
-
-
     return LaunchDescription([
         declare_use_sim,
         gazebo_launch,
