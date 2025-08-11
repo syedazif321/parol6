@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <cmath>
 #include <memory>
+#include <optional>
 
 BoxDetector::BoxDetector()
 : Node("box_detector_node"),
@@ -94,29 +95,161 @@ void BoxDetector::imageCallback(
   if (!detection_active_.load()) return;
 
   try {
-    auto rgb_ptr = cv_bridge::toCvCopy(rgb_msg, sensor_msgs::image_encodings::BGR8);
+    auto rgb_ptr   = cv_bridge::toCvCopy(rgb_msg,   sensor_msgs::image_encodings::BGR8);
     auto depth_ptr = cv_bridge::toCvCopy(depth_msg, sensor_msgs::image_encodings::TYPE_32FC1);
 
+    cv::Mat &rgb = rgb_ptr->image;
+    const cv::Mat &depth = depth_ptr->image;
+
+    // --- Build HSV + masks ---
     cv::Mat hsv;
-    cv::cvtColor(rgb_ptr->image, hsv, cv::COLOR_BGR2HSV);
+    cv::cvtColor(rgb, hsv, cv::COLOR_BGR2HSV);
 
     cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
-    cv::Mat red_mask = createRedMask(hsv);
-    cv::morphologyEx(red_mask, red_mask, cv::MORPH_OPEN, kernel);
-    cv::morphologyEx(red_mask, red_mask, cv::MORPH_CLOSE, kernel);
+
+    cv::Mat red_mask  = createRedMask(hsv);
+    cv::morphologyEx(red_mask,  red_mask,  cv::MORPH_OPEN,  kernel);
+    cv::morphologyEx(red_mask,  red_mask,  cv::MORPH_CLOSE, kernel);
 
     cv::Mat blue_mask = createBlueMask(hsv);
-    cv::morphologyEx(blue_mask, blue_mask, cv::MORPH_OPEN, kernel);
+    cv::morphologyEx(blue_mask, blue_mask, cv::MORPH_OPEN,  kernel);
     cv::morphologyEx(blue_mask, blue_mask, cv::MORPH_CLOSE, kernel);
 
-    // Pass header from image
-    detectBoxes(rgb_ptr->image, depth_ptr->image, red_mask, "Red", rgb_msg->header);
-    detectBoxes(rgb_ptr->image, depth_ptr->image, blue_mask, "Blue", rgb_msg->header);
+    // --- Collect the single nearest candidate (in base_link) ---
+    struct Candidate {
+      geometry_msgs::msg::PoseStamped base_pose;
+      std::string color;
+      double dist;
+      cv::RotatedRect rect;
+    };
+    std::optional<Candidate> best;
+
+    auto processMask = [&](const cv::Mat& mask, const std::string& color) {
+      std::vector<std::vector<cv::Point>> contours;
+      cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+      for (const auto& cnt : contours) {
+        double area = cv::contourArea(cnt);
+        if (area < min_area_) continue;
+
+        cv::RotatedRect rect = cv::minAreaRect(cnt);
+        cv::Point2f c = rect.center;
+        int u = static_cast<int>(c.x);
+        int v = static_cast<int>(c.y);
+        if (u < 0 || u >= depth.cols || v < 0 || v >= depth.rows) continue;
+
+        // Depth at (u,v) with small median fallback
+        float z = depth.at<float>(v, u);
+        if (!std::isfinite(z) || z <= 0.f) {
+          const int w = 5;
+          std::vector<float> vals;
+          vals.reserve((2*w+1)*(2*w+1));
+          for (int dy=-w; dy<=w; ++dy) {
+            for (int dx=-w; dx<=w; ++dx) {
+              int nx=u+dx, ny=v+dy;
+              if (0<=nx && nx<depth.cols && 0<=ny && ny<depth.rows) {
+                float val = depth.at<float>(ny, nx);
+                if (std::isfinite(val) && val>0.f) vals.push_back(val);
+              }
+            }
+          }
+          if (!vals.empty()) {
+            std::nth_element(vals.begin(), vals.begin()+vals.size()/2, vals.end());
+            z = vals[vals.size()/2];
+          } else {
+            continue; // no valid depth nearby
+          }
+        }
+
+        // Range check
+        if (z < 0.3 || z > 3.0) continue;
+
+        float X = (u - cx_) * z / fx_;
+        float Y = (v - cy_) * z / fy_;
+        float Z = z;
+
+        tf2::Quaternion q;
+        double yaw = -rect.angle * M_PI / 180.0;
+        if (yaw >  M_PI/2) yaw -= M_PI;
+        if (yaw < -M_PI/2) yaw += M_PI;
+        q.setRPY(M_PI, 0.0, yaw);
+        q.normalize();
+
+        geometry_msgs::msg::PoseStamped cam_pose;
+        cam_pose.header = rgb_msg->header;
+        cam_pose.header.frame_id = camera_frame_;
+        cam_pose.pose.position.x = X;
+        cam_pose.pose.position.y = Y;
+        cam_pose.pose.position.z = Z;
+        cam_pose.pose.orientation = tf2::toMsg(q);
+
+        try {
+          auto base_pose = tf_buffer_->transform(cam_pose, "base_link", tf2::durationFromSec(0.1));
+          double d = std::sqrt(
+              base_pose.pose.position.x * base_pose.pose.position.x +
+              base_pose.pose.position.y * base_pose.pose.position.y +
+              base_pose.pose.position.z * base_pose.pose.position.z);
+
+          if (!best.has_value() || d < best->dist) {
+            best = Candidate{base_pose, color, d, rect};
+          }
+        } catch (const tf2::TransformException& ex) {
+          RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000, "[%s] TF error: %s", color.c_str(), ex.what());
+          continue;
+        }
+      }
+    };
+
+    processMask(red_mask,  "Red");
+    processMask(blue_mask, "Blue");
+
+    if (best.has_value()) {
+      auto base_pose = best->base_pose;
+      base_pose.header.frame_id = "base_link";
+      pose_pub_->publish(base_pose);
+
+      geometry_msgs::msg::TransformStamped tf_msg;
+      tf_msg.header = base_pose.header;
+      tf_msg.child_frame_id = "detected_box";
+      tf_msg.transform.translation.x = base_pose.pose.position.x;
+      tf_msg.transform.translation.y = base_pose.pose.position.y;
+      tf_msg.transform.translation.z = base_pose.pose.position.z;
+      tf_msg.transform.rotation     = base_pose.pose.orientation;
+      tf_broadcaster_->sendTransform(tf_msg);
+
+      std::ostringstream ss;
+      ss << std::fixed << std::setprecision(3)
+         << "{color:" << best->color
+         << ", pos:[" << base_pose.pose.position.x << ", "
+         << base_pose.pose.position.y << ", "
+         << base_pose.pose.position.z << "], "
+         << "dist:" << best->dist << "}";
+      std_msgs::msg::String info;
+      info.data = ss.str();
+      info_pub_->publish(info);
+
+      RCLCPP_INFO(get_logger(), "[%s] Nearest box at %.3f m: (%.3f, %.3f, %.3f)",
+                  best->color.c_str(), best->dist,
+                  base_pose.pose.position.x, base_pose.pose.position.y, base_pose.pose.position.z);
+
+      // Draw rectangle & center on RGB for quick debug
+      cv::Point2f verts[4];
+      best->rect.points(verts);
+      for (int i = 0; i < 4; i++) {
+        cv::line(rgb, verts[i], verts[(i+1)%4], cv::Scalar(0,255,0), 2);
+      }
+      cv::circle(rgb, best->rect.center, 4, cv::Scalar(0,255,0), -1);
+      cv::putText(rgb,
+                  "Nearest " + best->color + " (" + std::to_string(best->dist).substr(0,4) + " m)",
+                  verts[0], cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0,255,0), 2);
+    } else {
+      RCLCPP_DEBUG(get_logger(), "No valid boxes found this frame.");
+    }
 
     // Show images
-    cv::imshow("RGB Detection", rgb_ptr->image);
+    cv::imshow("RGB Detection", rgb);
     cv::Mat depth_vis;
-    depth_ptr->image.convertTo(depth_vis, CV_8UC1, 255.0 / 5.0);
+    depth.convertTo(depth_vis, CV_8UC1, 255.0 / 5.0);
     cv::applyColorMap(depth_vis, depth_vis, cv::COLORMAP_JET);
     cv::imshow("Depth View", depth_vis);
     cv::waitKey(1);
@@ -133,6 +266,7 @@ void BoxDetector::detectBoxes(
     const std::string& color,
     const std_msgs::msg::Header& header)
 {
+  // (Unused now for publishing; kept intact for compatibility or future multi-publish use)
   std::vector<std::vector<cv::Point>> contours;
   cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
   RCLCPP_DEBUG(get_logger(), "[%s] Found %zu contours", color.c_str(), contours.size());
@@ -145,88 +279,12 @@ void BoxDetector::detectBoxes(
       continue;
     }
 
+    // kept for visualization/backward compatibility only
     cv::RotatedRect rect = cv::minAreaRect(cnt);
-    cv::Point2f center = rect.center;
-    int cx = static_cast<int>(center.x);
-    int cy = static_cast<int>(center.y);
-
-    if (cx < 0 || cx >= depth.cols || cy < 0 || cy >= depth.rows) continue;
-
-    float depth_val = depth.at<float>(cy, cx);
-    if (!std::isfinite(depth_val) || depth_val <= 0.0f) {
-      const int window = 5;
-      std::vector<float> valid;
-      for (int dy = -window; dy <= window; ++dy) {
-        for (int dx = -window; dx <= window; ++dx) {
-          int nx = cx + dx, ny = cy + dy;
-          if (nx >= 0 && nx < depth.cols && ny >= 0 && ny < depth.rows) {
-            float val = depth.at<float>(ny, nx);
-            if (std::isfinite(val) && val > 0.0f)
-              valid.push_back(val);
-          }
-        }
-      }
-      if (!valid.empty()) {
-        std::nth_element(valid.begin(), valid.begin() + valid.size()/2, valid.end());
-        depth_val = valid[valid.size()/2];
-      } else {
-        RCLCPP_WARN(get_logger(), "[%s] No valid depth near (%d, %d)", color.c_str(), cx, cy);
-        continue;
-      }
-    }
-
-    if (depth_val < 0.3 || depth_val > 3.0) {
-      RCLCPP_DEBUG(get_logger(), "[%s] Depth out of range: %.2f m", color.c_str(), depth_val);
-      continue;
-    }
-
-    float X = (cx - cx_) * depth_val / fx_;
-    float Y = (cy - cy_) * depth_val / fy_;
-    float Z = depth_val;
-
-    tf2::Quaternion q;
-    double yaw = -rect.angle * M_PI / 180.0;
-    if (yaw > M_PI/2) yaw -= M_PI;
-    if (yaw < -M_PI/2) yaw += M_PI;
-    q.setRPY(M_PI, 0.0, yaw);
-    q.normalize();
-
-    geometry_msgs::msg::PoseStamped cam_pose;
-    cam_pose.header = header;  //  Correct: use passed header
-    cam_pose.header.frame_id = camera_frame_;  // Optional override
-    cam_pose.pose.position.x = X;
-    cam_pose.pose.position.y = Y;
-    cam_pose.pose.position.z = Z;
-    cam_pose.pose.orientation = tf2::toMsg(q);
-
-    try {
-      auto base_pose = tf_buffer_->transform(cam_pose, "base_link", tf2::durationFromSec(0.1));
-      base_pose.header.frame_id = "base_link";
-      pose_pub_->publish(base_pose);
-
-      geometry_msgs::msg::TransformStamped tf_msg;
-      tf_msg.header = base_pose.header;
-      tf_msg.child_frame_id = "detected_box";
-      tf_msg.transform.translation.x = base_pose.pose.position.x;
-      tf_msg.transform.translation.y = base_pose.pose.position.y;
-      tf_msg.transform.translation.z = base_pose.pose.position.z;
-      tf_msg.transform.rotation = base_pose.pose.orientation;
-      tf_broadcaster_->sendTransform(tf_msg);
-
-      std::ostringstream ss;
-      ss << std::fixed << std::setprecision(3)
-         << "{color:" << color
-         << ", pos:[" << base_pose.pose.position.x << ", "
-         << base_pose.pose.position.y << ", "
-         << base_pose.pose.position.z << "]}";
-      RCLCPP_INFO(get_logger(), "[%s] Detected: %s", color.c_str(), ss.str().c_str());
-
-      std_msgs::msg::String info;
-      info.data = ss.str();
-      info_pub_->publish(info);
-
-    } catch (const tf2::TransformException &ex) {
-      RCLCPP_WARN(get_logger(), "[%s] TF error: %s", color.c_str(), ex.what());
+    cv::Point2f verts[4];
+    rect.points(verts);
+    for (int i = 0; i < 4; i++) {
+      cv::line(const_cast<cv::Mat&>(image), verts[i], verts[(i+1)%4], cv::Scalar(255, 0, 255), 1);
     }
   }
 }
