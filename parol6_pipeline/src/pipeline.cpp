@@ -1,3 +1,5 @@
+// File: src/pipeline.cpp
+
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <conveyorbelt_msgs/srv/move_distance.hpp>
@@ -9,7 +11,11 @@
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <std_msgs/msg/string.hpp>
+#include <builtin_interfaces/msg/time.hpp>
 #include <nlohmann/json.hpp>
+
+#include <trajectory_msgs/msg/joint_trajectory.hpp>
+#include <trajectory_msgs/msg/joint_trajectory_point.hpp>
 
 #include <fstream>
 #include <string>
@@ -68,13 +74,17 @@ public:
     stop_det_client_   = this->create_client<std_srvs::srv::Trigger>("/stop_detection");
     spawn_client_      = this->create_client<std_srvs::srv::Trigger>("/spawn_box");
     start_pick_client_ = this->create_client<std_srvs::srv::Trigger>("/start_picking"); // external pick controller
+
+    // ---------- Joint trajectory publisher (J1..J6) ----------
+    traj_pub_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>(
+                  "/arm_controller/joint_trajectory", rclcpp::QoS(10));
   }
 
   void run() {
     RCLCPP_INFO(get_logger(), "Pipeline node ready. Press Enter to begin...");
     std::cin.get();
 
-    loadTargetsJson();            // optional fallback for named poses
+    loadTargetsJson();            // optional fallback for named poses (we use JSON for joints)
     stopDetectionIfRunning();     // make sure detection is off
     vision_enabled_.store(false); // gate callbacks during initial feed
 
@@ -84,8 +94,8 @@ public:
       return;
     }
 
-    // ==== NEW: Fixed-timing vision right after the 3rd conveyor2 move ====
-    // Wait 4s, then run vision for 3s, stop, and use that result.
+    // ==== Fixed-timing vision right after the 3rd conveyor2 move ====
+    // Wait 6s, then run vision for 3s, stop, and use the result.
     auto first_vd = runFixedVisionWindow(6.0 /*start delay sec*/, 3.0 /*vision sec*/);
     if (!first_vd) {
       RCLCPP_ERROR(get_logger(), "No detection in fixed vision window. Stopping.");
@@ -104,7 +114,7 @@ public:
       ++cycle;
     }
 
-    // Subsequent cycles: keep existing stabilization-based vision window
+    // Subsequent cycles (use stabilization-based vision)
     while (rclcpp::ok() && (kMaxCycles < 0 || cycle < kMaxCycles)) {
       RCLCPP_INFO(get_logger(), "==== Cycle %d ====", cycle + 1);
 
@@ -132,24 +142,34 @@ private:
   static constexpr double kStablePosTol       = 0.01;   // meters (1 cm)
   static constexpr int    kStableMinCount     = 10;     // consecutive samples
   static constexpr bool   kEnforceMsgStamp    = false;  // ignore message stamp gate by default
-  static constexpr double kColorGraceSec      = 12.0;   // seconds to wait for color after pose stable
+  static constexpr double kColorGraceSec      = 12.0;   // seconds to wait for color after stable pose
 
-  static constexpr double kConveyor2Step      = 0.24;   // meters
+  static constexpr double kConveyor2Step      = 0.25;   // meters
   static constexpr double kConveyor1Step      = 0.215;
   static constexpr double kConveyor3Step      = 0.215;
 
-  // motion scaling
-  static constexpr double kVelScale           = 0.2;
-  static constexpr double kAccScale           = 0.2;
+  // timing for joint moves & pick
+  static constexpr double kJointMoveSeconds   = 2.0;    // duration for each joint move
+  static constexpr double kPickSettleSec      = 0.8;    // small grace after /start_picking
+  static constexpr double kPickMotionWaitSec  = 4.0;    // wait so arm can reach detected pose
 
   // ---------- State ----------
+  // (MoveIt kept included but we won't use it for motion now)
   std::shared_ptr<moveit::planning_interface::MoveGroupInterface> move_group_;
+
+  // Services
   rclcpp::Client<msg_gazebo::srv::AttachDetach>::SharedPtr attach_client_;
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr start_det_client_, stop_det_client_, spawn_client_;
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr start_pick_client_;
+
+  // Subs
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr info_sub_;
 
+  // Publishers
+  rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr traj_pub_;
+
+  // Vision buffers
   std::mutex vision_mutex_;
   geometry_msgs::msg::PoseStamped latest_pose_;
   builtin_interfaces::msg::Time   latest_pose_stamp_;
@@ -159,6 +179,7 @@ private:
   std::atomic<bool> vision_enabled_{false};
 
   std::unordered_map<std::string, int> color_counts_{{"red",0},{"blue",0}};
+  std::string current_model_name_; // Red_1 / Blue_1 / Red_2 ...
 
   json targets_json_;
   bool targets_json_loaded_{false};
@@ -167,37 +188,48 @@ private:
   bool processPickDropCycle(const geometry_msgs::msg::PoseStamped& det_pose_in, const std::string& det_color) {
     RCLCPP_INFO(get_logger(), "==== Executing cycle for color: %s ====", det_color.c_str());
 
-    // 1) Let your external node do the picking
-    if (!callTrigger(start_pick_client_, "/start_picking", 30)) {
-      RCLCPP_ERROR(get_logger(), "External picking failed or service unavailable.");
-      return false;
-    }
-    RCLCPP_INFO(get_logger(), "External picking completed. Proceeding to place.");
+    // Decide model name (Red_1, Blue_1, ...)
+    current_model_name_ = nextModelName(det_color);
+    RCLCPP_INFO(get_logger(), "Will attach model name: %s", current_model_name_.c_str());
 
-    // 2) Background FEED while we move to home
-    std::thread bg_feed([this]() {
-      if (!spawnBox()) return;
+    // 1) Move to detected pose via external picker; then ATTACH suction.
+    (void)callTrigger(start_pick_client_, "/start_picking", 30);
+    std::this_thread::sleep_for(std::chrono::milliseconds(
+        static_cast<int>((kPickSettleSec + kPickMotionWaitSec) * 1000)));
+
+    if (!attachDetach(current_model_name_, true)) {
+      RCLCPP_WARN(get_logger(), "Attach (suction ON) reported failure for %s. Continuing.",
+                  current_model_name_.c_str());
+    } else {
+      RCLCPP_INFO(get_logger(), "✅ Attached (suction ON) for %s", current_model_name_.c_str());
+    }
+
+    // 2) Go to "up" first (via JointTrajectory). Spawn NEXT box DURING this move.
+    std::thread spawn_during_up([this]() {
+      std::this_thread::sleep_for(300ms); // make sure motion already started
+      if (!spawnBox()) { RCLCPP_WARN(get_logger(), "Spawn failed during 'up' motion."); return; }
       std::this_thread::sleep_for(1s);
       moveConveyor("/conveyor2/MoveDistance", kConveyor2Step);
     });
+    if (!goNamedOrJson("up")) { if (spawn_during_up.joinable()) spawn_during_up.join(); return false; }
+    if (spawn_during_up.joinable()) spawn_during_up.join();
 
-    // 3) Transit to home (ensure MoveIt is ready)
-    if (!goNamed("home")) { if (bg_feed.joinable()) bg_feed.join(); return false; }
-    if (bg_feed.joinable()) bg_feed.join();
-
-    // 4) Route by color to drop location
+    // 3) Route by color to drop location (ALL via JointTrajectory)
     if (det_color == "red") {
-      if (!goNamed("conveyor1_pre")) return false;
-      if (!goNamed("conveyor_1")) return false;
+      if (!goNamedOrJson("conveyor_1_pre")) return false;
+      if (!goNamedOrJson("conveyor_1"))    return false;
     } else {
-      if (!goNamed("conveyor3_pre")) return false;
-      if (!goNamed("conveyor_3")) return false;
+      if (!goNamedOrJson("conveyor_3_pre")) return false;
+      if (!goNamedOrJson("conveyor_3"))    return false;
     }
 
-    // 5) Detach at drop, then nudge that conveyor
+    // 4) Detach at drop, then nudge that conveyor
     std::this_thread::sleep_for(200ms);
-    if (!attachDetach("ignored_model_name", false)) {
-      RCLCPP_WARN(get_logger(), "Detach reported failure (maybe already detached). Continuing.");
+    if (!attachDetach(current_model_name_, false)) {
+      RCLCPP_WARN(get_logger(), "Detach reported failure for %s (maybe already detached). Continuing.",
+                  current_model_name_.c_str());
+    } else {
+      RCLCPP_INFO(get_logger(), "✅ Detached (suction OFF) for %s", current_model_name_.c_str());
     }
     if (det_color == "red") {
       moveConveyor("/conveyor1/MoveDistance", kConveyor1Step);
@@ -205,20 +237,20 @@ private:
       moveConveyor("/conveyor3/MoveDistance", kConveyor3Step);
     }
 
-    // 6) Return along the same side, back to home/init_pose
+    // 5) Return along the same side, back to home/init_pose (ALL via JointTrajectory)
     if (det_color == "red") {
-      if (!goNamed("conveyor_1")) return false;
-      if (!goNamed("conveyor1_pre")) return false;
+      if (!goNamedOrJson("conveyor_1"))     return false;
+      if (!goNamedOrJson("conveyor_1_pre")) return false;  // <-- fixed underscore
     } else {
-      if (!goNamed("conveyor_3")) return false;
-      if (!goNamed("conveyor3_pre")) return false;
+      if (!goNamedOrJson("conveyor_3"))     return false;
+      if (!goNamedOrJson("conveyor_3_pre")) return false;  // <-- fixed underscore
     }
-    if (!goNamed("home")) return false;
+    if (!goNamedOrJson("home")) return false;
     if (!goNamedOrJson("init_pose")) {
       RCLCPP_WARN(get_logger(), "No init_pose named/JSON target; staying at home.");
     }
 
-    // 7) Tail feed before next vision
+    // 6) Tail feed before next vision (unchanged)
     if (!spawnBox()) { RCLCPP_WARN(get_logger(), "Spawn failed in tail feed."); }
     std::this_thread::sleep_for(1s);
     moveConveyor("/conveyor2/MoveDistance", kConveyor2Step);
@@ -226,95 +258,84 @@ private:
     return true;
   }
 
-  // ---------- MoveIt bringup wait + construct lazily (robust) ----------
-  bool ensureMoveGroup(double timeout_sec = 30.0) {
-    if (move_group_) return true;
-
-    const rclcpp::Time t0 = now();
-    while (rclcpp::ok() && (now() - t0).seconds() < timeout_sec) {
-      try {
-        move_group_ = std::make_shared<moveit::planning_interface::MoveGroupInterface>(shared_from_this(), "arm");
-        move_group_->setPlanningTime(5.0);
-        move_group_->setMaxVelocityScalingFactor(kVelScale);
-        move_group_->setMaxAccelerationScalingFactor(kAccScale);
-        auto named = move_group_->getNamedTargets();
-        RCLCPP_INFO(get_logger(), "MoveGroup ready. Named targets: %zu", named.size());
-        return true;
-      } catch (const std::exception &e) {
-        RCLCPP_WARN(get_logger(), "Waiting for MoveIt... (%s)", e.what());
-        std::this_thread::sleep_for(500ms);
-      }
+  // ---------- JointTrajectory helpers (publisher-only) ----------
+  bool sendJoints(const std::vector<double>& joint_positions, double seconds=kJointMoveSeconds) {
+    if (joint_positions.size() != 6) {
+      RCLCPP_ERROR(get_logger(), "Expected 6 joint positions, got %zu", joint_positions.size());
+      return false;
     }
 
-    RCLCPP_ERROR(get_logger(), "Timed out (%.1fs) waiting for MoveIt (move_group). Start your MoveIt bringup.",
-                 timeout_sec);
-    return false;
+    trajectory_msgs::msg::JointTrajectory traj;
+    traj.joint_names = {"J1","J2","J3","J4","J5","J6"};
+
+    trajectory_msgs::msg::JointTrajectoryPoint pt;
+    pt.positions = joint_positions;
+    pt.time_from_start.sec  = static_cast<int32_t>(seconds);
+    pt.time_from_start.nanosec = static_cast<uint32_t>((seconds - std::floor(seconds)) * 1e9);
+
+    traj.points.push_back(pt);
+
+    // Stamp and publish
+    traj.header.stamp = this->now();
+    traj_pub_->publish(traj);
+    RCLCPP_INFO(get_logger(), "Sent JointTrajectory with %zu joints, duration=%.2fs",
+                joint_positions.size(), seconds);
+
+    // No feedback from topic; wait a bit for execution to finish
+    auto wait_ms = static_cast<int>(seconds * 1000.0) + 300; // small buffer
+    std::this_thread::sleep_for(std::chrono::milliseconds(wait_ms));
+    return true;
   }
 
-  // ---------- NEW: Fixed-timing vision (no stabilization): wait -> run -> stop ----------
-  // After the 3rd spawn+conveyor2 move: wait `start_delay_sec`, run vision for `vision_sec`, stop.
-  // Returns last pose+color received during that window (if both arrived).
-  std::optional<std::pair<geometry_msgs::msg::PoseStamped,std::string>>
-  runFixedVisionWindow(double start_delay_sec, double vision_sec) {
-    // Make sure detection is off and reset buffers
-    (void)callTrigger(stop_det_client_, "/stop_detection", 2);
-    {
-      std::lock_guard<std::mutex> lk(vision_mutex_);
-      got_pose_ = false;
-      got_color_ = false;
-      latest_color_.clear();
-      latest_pose_ = geometry_msgs::msg::PoseStamped{};
-      latest_pose_stamp_ = builtin_interfaces::msg::Time{};
-    }
-
-    // Start delay
-    RCLCPP_INFO(get_logger(), "⏳ Waiting %.1fs before starting fixed vision window...", start_delay_sec);
-    std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(start_delay_sec * 1000)));
-
-    // Start detection
-    if (!callTrigger(start_det_client_, "/start_detection")) {
-      RCLCPP_ERROR(get_logger(), "Failed to start detection.");
-      return std::nullopt;
-    }
-    vision_enabled_.store(true);
-
-    // Run for fixed duration
-    RCLCPP_INFO(get_logger(), "👁️ Fixed vision running for %.1fs ...", vision_sec);
-    const rclcpp::Time t_start = now();
-    while (rclcpp::ok() && (now() - t_start).seconds() < vision_sec) {
-      rclcpp::spin_some(this->get_node_base_interface());
-      std::this_thread::sleep_for(20ms);
-    }
-
-    // Stop detection
-    (void)callTrigger(stop_det_client_, "/stop_detection", 3);
-    vision_enabled_.store(false);
-    RCLCPP_INFO(get_logger(), "🛑 Fixed vision stopped.");
-
-    // Read whatever we got during the window
-    geometry_msgs::msg::PoseStamped pose;
-    std::string color;
-    bool have_pose=false, have_color=false;
-    {
-      std::lock_guard<std::mutex> lk(vision_mutex_);
-      have_pose  = got_pose_;
-      have_color = got_color_;
-      if (have_pose)  pose  = latest_pose_;
-      if (have_color) color = latest_color_;
-    }
-
-    if (!have_pose) {
-      RCLCPP_ERROR(get_logger(), "No pose received during fixed vision window.");
-      return std::nullopt;
-    }
-    if (!have_color) {
-      RCLCPP_ERROR(get_logger(), "No color received during fixed vision window.");
-      return std::nullopt;
-    }
-    return std::make_pair(pose, color);
+  // ---------- Motion helpers (now ONLY via Targets.json + JointTrajectory) ----------
+  bool goNamed(const std::string &name) {
+    return goNamedOrJson(name);
   }
 
-  // ---------- Legacy: Vision window with warm-up + pose stabilization ----------
+  bool goNamedOrJson(const std::string &name) {
+    if (!targets_json_loaded_) {
+      RCLCPP_ERROR(get_logger(), "Targets.json not loaded; cannot go to '%s'.", name.c_str());
+      return false;
+    }
+    if (!targets_json_.contains(name) || !targets_json_[name].is_array()) {
+      RCLCPP_ERROR(get_logger(), "Targets.json has no array for '%s'.", name.c_str());
+      return false;
+    }
+    std::vector<double> joints;
+    joints.reserve(targets_json_[name].size());
+    for (auto &v : targets_json_[name]) joints.push_back(static_cast<double>(v));
+    return sendJoints(joints, kJointMoveSeconds);
+  }
+
+  // ---------- Attach/Detach ----------
+  bool attachDetach(const std::string &model_name, bool attach) {
+    if (!attach_client_->wait_for_service(5s)) {
+      RCLCPP_ERROR(get_logger(), "Service /AttachDetach not available.");
+      return false;
+    }
+    auto req = std::make_shared<msg_gazebo::srv::AttachDetach::Request>();
+    req->model1 = "parol6";
+    req->link1  = "L6";
+    req->model2 = model_name;  // Red_1 / Blue_1 / Red_2 / Blue_2 ...
+    req->link2  = "link";
+    req->attach = attach;
+
+    auto fut = attach_client_->async_send_request(req);
+    auto rc = rclcpp::spin_until_future_complete(this->get_node_base_interface(), fut);
+    if (rc != rclcpp::FutureReturnCode::SUCCESS) {
+      RCLCPP_ERROR(get_logger(), "AttachDetach call failed.");
+      return false;
+    }
+    auto res = fut.get();
+    if (!res->success) {
+      RCLCPP_ERROR(get_logger(), "%s failed for %s.", attach ? "Attach" : "Detach", model_name.c_str());
+      return false;
+    }
+    RCLCPP_INFO(get_logger(), "%s OK: %s", attach ? "Attached" : "Detached", model_name.c_str());
+    return true;
+  }
+
+  // ---------- Vision window: warm-up, pose stabilization, color grace ----------
   std::optional<std::pair<geometry_msgs::msg::PoseStamped,std::string>>
   runVisionWindow(double seconds) {
     // Reset & enable
@@ -409,6 +430,67 @@ private:
     return std::nullopt;
   }
 
+  // ---------- NEW: Fixed-timing vision (no stabilization): wait -> run -> stop ----------
+  std::optional<std::pair<geometry_msgs::msg::PoseStamped,std::string>>
+  runFixedVisionWindow(double start_delay_sec, double vision_sec) {
+    // Make sure detection is off and reset buffers
+    (void)callTrigger(stop_det_client_, "/stop_detection", 2);
+    {
+      std::lock_guard<std::mutex> lk(vision_mutex_);
+      got_pose_ = false;
+      got_color_ = false;
+      latest_color_.clear();
+      latest_pose_ = geometry_msgs::msg::PoseStamped{};
+      latest_pose_stamp_ = builtin_interfaces::msg::Time{};
+    }
+
+    // Start delay
+    RCLCPP_INFO(get_logger(), "⏳ Waiting %.1fs before starting fixed vision window...", start_delay_sec);
+    std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(start_delay_sec * 1000)));
+
+    // Start detection
+    if (!callTrigger(start_det_client_, "/start_detection")) {
+      RCLCPP_ERROR(get_logger(), "Failed to start detection.");
+      return std::nullopt;
+    }
+    vision_enabled_.store(true);
+
+    // Run for fixed duration
+    RCLCPP_INFO(get_logger(), "👁️ Fixed vision running for %.1fs ...", vision_sec);
+    const rclcpp::Time t_start = now();
+    while (rclcpp::ok() && (now() - t_start).seconds() < vision_sec) {
+      rclcpp::spin_some(this->get_node_base_interface());
+      std::this_thread::sleep_for(20ms);
+    }
+
+    // Stop detection
+    (void)callTrigger(stop_det_client_, "/stop_detection", 3);
+    vision_enabled_.store(false);
+    RCLCPP_INFO(get_logger(), "🛑 Fixed vision stopped.");
+
+    // Read whatever we got during the window
+    geometry_msgs::msg::PoseStamped pose;
+    std::string color;
+    bool have_pose=false, have_color=false;
+    {
+      std::lock_guard<std::mutex> lk(vision_mutex_);
+      have_pose  = got_pose_;
+      have_color = got_color_;
+      if (have_pose)  pose  = latest_pose_;
+      if (have_color) color = latest_color_;
+    }
+
+    if (!have_pose) {
+      RCLCPP_ERROR(get_logger(), "No pose received during fixed vision window.");
+      return std::nullopt;
+    }
+    if (!have_color) {
+      RCLCPP_ERROR(get_logger(), "No color received during fixed vision window.");
+      return std::nullopt;
+    }
+    return std::make_pair(pose, color);
+  }
+
   void stopDetectionIfRunning() {
     if (stop_det_client_->wait_for_service(1s)) {
       (void)callTrigger(stop_det_client_, "/stop_detection", 2);
@@ -448,85 +530,6 @@ private:
     std::string name = cap + "_" + std::to_string(it->second);
     RCLCPP_INFO(get_logger(), "Model name chosen: %s", name.c_str());
     return name;
-  }
-
-  // ---------- Motion helpers ----------
-  bool goNamed(const std::string &name) {
-    if (!ensureMoveGroup()) return false;
-
-    move_group_->setNamedTarget(name);
-    moveit::planning_interface::MoveGroupInterface::Plan plan;
-    auto ok = (move_group_->plan(plan) == moveit::core::MoveItErrorCode::SUCCESS);
-    if (!ok) {
-      RCLCPP_ERROR(get_logger(), "Plan to named target '%s' failed.", name.c_str());
-      return false;
-    }
-    auto exec = move_group_->execute(plan);
-    if (exec != moveit::core::MoveItErrorCode::SUCCESS) {
-      RCLCPP_ERROR(get_logger(), "Exec to named target '%s' failed.", name.c_str());
-      return false;
-    }
-    RCLCPP_INFO(get_logger(), "Moved to named target: %s", name.c_str());
-    return true;
-  }
-
-  bool goNamedOrJson(const std::string &name) {
-    if (goNamed(name)) return true;
-
-    if (!targets_json_loaded_) {
-      RCLCPP_ERROR(get_logger(), "Target '%s' not available and no JSON loaded.", name.c_str());
-      return false;
-    }
-    if (!targets_json_.contains(name) || !targets_json_[name].is_array()) {
-      RCLCPP_ERROR(get_logger(), "Targets.json has no array for '%s'.", name.c_str());
-      return false;
-    }
-    if (!ensureMoveGroup()) return false;
-
-    std::vector<double> joints;
-    for (auto &v : targets_json_[name]) joints.push_back(static_cast<double>(v));
-
-    move_group_->setJointValueTarget(joints);
-    moveit::planning_interface::MoveGroupInterface::Plan plan;
-    auto ok = (move_group_->plan(plan) == moveit::core::MoveItErrorCode::SUCCESS);
-    if (!ok) {
-      RCLCPP_ERROR(get_logger(), "Plan to JSON target '%s' failed.", name.c_str());
-      return false;
-    }
-    auto exec = move_group_->execute(plan);
-    if (exec != moveit::core::MoveItErrorCode::SUCCESS) {
-      RCLCPP_ERROR(get_logger(), "Exec to JSON target '%s' failed.", name.c_str());
-      return false;
-    }
-    RCLCPP_INFO(get_logger(), "Moved to JSON target: %s", name.c_str());
-    return true;
-  }
-
-  bool attachDetach(const std::string &model_name, bool attach) {
-    if (!attach_client_->wait_for_service(5s)) {
-      RCLCPP_ERROR(get_logger(), "Service /AttachDetach not available.");
-      return false;
-    }
-    auto req = std::make_shared<msg_gazebo::srv::AttachDetach::Request>();
-    req->model1 = "parol6";
-    req->link1  = "L6";
-    req->model2 = model_name; // name unused if external node already attached/detached
-    req->link2  = "link";
-    req->attach = attach;
-
-    auto fut = attach_client_->async_send_request(req);
-    auto rc = rclcpp::spin_until_future_complete(this->get_node_base_interface(), fut);
-    if (rc != rclcpp::FutureReturnCode::SUCCESS) {
-      RCLCPP_ERROR(get_logger(), "AttachDetach call failed.");
-      return false;
-    }
-    auto res = fut.get();
-    if (!res->success) {
-      RCLCPP_ERROR(get_logger(), "%s failed for %s.", attach ? "Attach" : "Detach", model_name.c_str());
-      return false;
-    }
-    RCLCPP_INFO(get_logger(), "%s OK: %s", attach ? "Attached" : "Detached", model_name.c_str());
-    return true;
   }
 
   // ---------- Conveyor + initial feed ----------
@@ -582,7 +585,8 @@ private:
     }
     auto res = fut.get();
     if (!res->success) {
-      RCLCPP_ERROR(get_logger(), "Service %s returned failure: %s", name, res->message.c_str());
+      // Intentionally do not break the pipeline on failure from /start_picking
+      RCLCPP_WARN(get_logger(), "Service %s returned failure: %s", name, res->message.c_str());
       return false;
     }
     return true;
