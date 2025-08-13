@@ -22,7 +22,8 @@ def generate_launch_description():
     rsp_node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
-        parameters=[robot_description],
+        name="robot_state_publisher",
+        parameters=[robot_description, {"use_sim_time": True}],
         output="screen"
     )
 
