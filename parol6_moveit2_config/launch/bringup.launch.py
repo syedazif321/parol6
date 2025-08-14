@@ -121,9 +121,6 @@ def generate_launch_description():
         arguments=["--ros-args", "--log-level", "move_group:=debug"], 
     )
 
-
-
-
     rviz_node = Node(
         package="rviz2",
         executable="rviz2",
@@ -184,9 +181,15 @@ def generate_launch_description():
             {"robot_description_kinematics": kinematics_yaml},
             joint_limits,
             {"use_sim_time": use_sim} 
-        ],
-        remappings=[
-
+        ]
+    )
+    pipeline_node = Node(
+        package='parol6_pipeline',
+        executable='pipeline_node',
+        output='screen',
+        parameters=[
+            robot_description,
+            robot_description_semantic,
         ]
     )
 
@@ -201,5 +204,6 @@ def generate_launch_description():
         servo_node,
         static_tf_camera_mount,
         pick_controller_node,
+        pipeline_node,
 
     ])

@@ -20,31 +20,30 @@ find_package(message_filters REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(moveit_msgs REQUIRED)
 find_package(nlohmann_json REQUIRED)
-
-# 🔧 Only find_package — but we'll enforce build order later
 find_package(conveyorbelt_msgs REQUIRED)
 find_package(msg_gazebo REQUIRED)
+
 
 include_directories(
   include
   ${OpenCV_INCLUDE_DIRS}
+  ${moveit_ros_planning_interface_INCLUDE_DIRS}
 )
 
-# ========== Executables ==========
 
 add_executable(box_detector_node src/box_detector.cpp)
 ament_target_dependencies(box_detector_node
-  "rclcpp"
-  "sensor_msgs"
-  "geometry_msgs"
-  "std_msgs"
-  "cv_bridge"
-  "image_transport"
-  "tf2"
-  "tf2_ros"
-  "tf2_geometry_msgs"
-  "message_filters"
-  "moveit_ros_planning_interface"
+  rclcpp
+  sensor_msgs
+  geometry_msgs
+  std_msgs
+  cv_bridge
+  image_transport
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
+  message_filters
+  moveit_ros_planning_interface
 )
 
 target_link_libraries(box_detector_node
@@ -56,41 +55,35 @@ target_link_libraries(box_detector_node
 
 add_executable(pick_controller_node src/pick_controller.cpp)
 ament_target_dependencies(pick_controller_node
-  "rclcpp"
-  "geometry_msgs"
-  "std_msgs"
-  "std_srvs"
-  "moveit_ros_planning_interface"
-  "moveit_msgs"
-  "tf2"
-  "tf2_ros"
-  "tf2_geometry_msgs"
+  rclcpp
+  geometry_msgs
+  std_msgs
+  std_srvs
+  moveit_ros_planning_interface
+  moveit_msgs
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
 )
 
 target_link_libraries(pick_controller_node
   tf2::tf2
   tf2_ros::tf2_ros
   tf2_geometry_msgs::tf2_geometry_msgs
-  ${moveit_ros_planning_interface_LIBRARIES}
 )
 
 add_executable(pipeline_node src/pipeline.cpp)
 ament_target_dependencies(pipeline_node
-  "rclcpp"
-  "std_srvs"
-  "conveyorbelt_msgs"
-  "msg_gazebo"
-  "geometry_msgs"
-  "moveit_ros_planning_interface"
-  "moveit_msgs"
-  "nlohmann_json"
+  rclcpp
+  std_srvs
+  conveyorbelt_msgs
+  msg_gazebo
+  geometry_msgs
+  moveit_ros_planning_interface
+  moveit_msgs
+  nlohmann_json
 )
 
-target_link_libraries(pipeline_node
-  ${moveit_ros_planning_interface_LIBRARIES}
-)
-
-# Safely add dependencies on message targets
 if(conveyorbelt_msgs_EXPORTED_TARGETS)
   add_dependencies(pipeline_node ${conveyorbelt_msgs_EXPORTED_TARGETS})
 endif()
@@ -98,7 +91,6 @@ endif()
 if(msg_gazebo_EXPORTED_TARGETS)
   add_dependencies(pipeline_node ${msg_gazebo_EXPORTED_TARGETS})
 endif()
-# ========== Install ==========
 
 install(TARGETS
   box_detector_node
