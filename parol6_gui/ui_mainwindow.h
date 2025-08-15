@@ -94,28 +94,42 @@ public:
     QLabel *labelActiveSpeed;
     QLabel *labelErrors;
     QWidget *tab_targets;
-    QVBoxLayout *targetLayout;
-    QLineEdit *lineEditTargetName;
-    QPushButton *btnSaveTarget;
-    QHBoxLayout *targetDisplayButtons;
+    QVBoxLayout *verticalLayout_3;
+    QVBoxLayout *verticalLayout_2;
     QPushButton *btnShowJointValues;
     QPushButton *btnShowPoseValues;
     QHBoxLayout *targetDropdownLayout;
+    QLineEdit *lineEditTargetName;
     QComboBox *comboBoxTargets;
     QPushButton *btnGoToTarget;
+    QPushButton *btnSaveTarget;
+    QPushButton *btnSaveTarget_2;
     QGridLayout *jointValuesLayout;
-    QLabel *labelJoint1Value;
-    QLabel *valueJoint1;
-    QLabel *labelJoint2Value;
-    QLabel *valueJoint2;
-    QLabel *labelJoint3Value;
     QLabel *valueJoint3;
-    QLabel *labelJoint4Value;
-    QLabel *valueJoint4;
-    QLabel *labelJoint5Value;
-    QLabel *valueJoint5;
     QLabel *labelJoint6Value;
+    QLabel *valueJoint1;
+    QLabel *labelJoint4Value;
+    QLabel *valueJoint2;
     QLabel *valueJoint6;
+    QLabel *labelJoint3Value;
+    QLabel *valueJoint4;
+    QLabel *labelJoint1Value;
+    QLabel *labelJoint5Value;
+    QLabel *labelJoint2Value;
+    QLabel *valueJoint5;
+    QGridLayout *jointValuesLayout_3;
+    QLabel *valueJoint3_3;
+    QLabel *labelJoint6Value_3;
+    QLabel *valueJoint1_3;
+    QLabel *labelJoint4Value_3;
+    QLabel *valueJoint2_3;
+    QLabel *valueJoint6_3;
+    QLabel *labelJoint3Value_3;
+    QLabel *valueJoint4_3;
+    QLabel *labelJoint1Value_3;
+    QLabel *labelJoint5Value_3;
+    QLabel *labelJoint2Value_3;
+    QLabel *valueJoint5_3;
     QTextEdit *textTargetValues;
     QMenuBar *menubar;
     QStatusBar *statusbar;
@@ -408,35 +422,30 @@ public:
         tabWidget->addTab(tab_control, QString());
         tab_targets = new QWidget();
         tab_targets->setObjectName(QString::fromUtf8("tab_targets"));
-        targetLayout = new QVBoxLayout(tab_targets);
-        targetLayout->setObjectName(QString::fromUtf8("targetLayout"));
-        lineEditTargetName = new QLineEdit(tab_targets);
-        lineEditTargetName->setObjectName(QString::fromUtf8("lineEditTargetName"));
+        verticalLayout_3 = new QVBoxLayout(tab_targets);
+        verticalLayout_3->setObjectName(QString::fromUtf8("verticalLayout_3"));
+        verticalLayout_2 = new QVBoxLayout();
+        verticalLayout_2->setObjectName(QString::fromUtf8("verticalLayout_2"));
 
-        targetLayout->addWidget(lineEditTargetName);
+        verticalLayout_3->addLayout(verticalLayout_2);
 
-        btnSaveTarget = new QPushButton(tab_targets);
-        btnSaveTarget->setObjectName(QString::fromUtf8("btnSaveTarget"));
-
-        targetLayout->addWidget(btnSaveTarget);
-
-        targetDisplayButtons = new QHBoxLayout();
-        targetDisplayButtons->setObjectName(QString::fromUtf8("targetDisplayButtons"));
         btnShowJointValues = new QPushButton(tab_targets);
         btnShowJointValues->setObjectName(QString::fromUtf8("btnShowJointValues"));
 
-        targetDisplayButtons->addWidget(btnShowJointValues);
+        verticalLayout_3->addWidget(btnShowJointValues);
 
         btnShowPoseValues = new QPushButton(tab_targets);
         btnShowPoseValues->setObjectName(QString::fromUtf8("btnShowPoseValues"));
 
-        targetDisplayButtons->addWidget(btnShowPoseValues);
-
-
-        targetLayout->addLayout(targetDisplayButtons);
+        verticalLayout_3->addWidget(btnShowPoseValues);
 
         targetDropdownLayout = new QHBoxLayout();
         targetDropdownLayout->setObjectName(QString::fromUtf8("targetDropdownLayout"));
+        lineEditTargetName = new QLineEdit(tab_targets);
+        lineEditTargetName->setObjectName(QString::fromUtf8("lineEditTargetName"));
+
+        targetDropdownLayout->addWidget(lineEditTargetName);
+
         comboBoxTargets = new QComboBox(tab_targets);
         comboBoxTargets->setObjectName(QString::fromUtf8("comboBoxTargets"));
 
@@ -448,78 +457,153 @@ public:
         targetDropdownLayout->addWidget(btnGoToTarget);
 
 
-        targetLayout->addLayout(targetDropdownLayout);
+        verticalLayout_3->addLayout(targetDropdownLayout);
+
+        btnSaveTarget = new QPushButton(tab_targets);
+        btnSaveTarget->setObjectName(QString::fromUtf8("btnSaveTarget"));
+
+        verticalLayout_3->addWidget(btnSaveTarget);
+
+        btnSaveTarget_2 = new QPushButton(tab_targets);
+        btnSaveTarget_2->setObjectName(QString::fromUtf8("btnSaveTarget_2"));
+
+        verticalLayout_3->addWidget(btnSaveTarget_2);
 
         jointValuesLayout = new QGridLayout();
         jointValuesLayout->setObjectName(QString::fromUtf8("jointValuesLayout"));
-        labelJoint1Value = new QLabel(tab_targets);
-        labelJoint1Value->setObjectName(QString::fromUtf8("labelJoint1Value"));
-
-        jointValuesLayout->addWidget(labelJoint1Value, 0, 0, 1, 1);
-
-        valueJoint1 = new QLabel(tab_targets);
-        valueJoint1->setObjectName(QString::fromUtf8("valueJoint1"));
-
-        jointValuesLayout->addWidget(valueJoint1, 0, 1, 1, 1);
-
-        labelJoint2Value = new QLabel(tab_targets);
-        labelJoint2Value->setObjectName(QString::fromUtf8("labelJoint2Value"));
-
-        jointValuesLayout->addWidget(labelJoint2Value, 1, 0, 1, 1);
-
-        valueJoint2 = new QLabel(tab_targets);
-        valueJoint2->setObjectName(QString::fromUtf8("valueJoint2"));
-
-        jointValuesLayout->addWidget(valueJoint2, 1, 1, 1, 1);
-
-        labelJoint3Value = new QLabel(tab_targets);
-        labelJoint3Value->setObjectName(QString::fromUtf8("labelJoint3Value"));
-
-        jointValuesLayout->addWidget(labelJoint3Value, 2, 0, 1, 1);
-
         valueJoint3 = new QLabel(tab_targets);
         valueJoint3->setObjectName(QString::fromUtf8("valueJoint3"));
 
-        jointValuesLayout->addWidget(valueJoint3, 2, 1, 1, 1);
-
-        labelJoint4Value = new QLabel(tab_targets);
-        labelJoint4Value->setObjectName(QString::fromUtf8("labelJoint4Value"));
-
-        jointValuesLayout->addWidget(labelJoint4Value, 3, 0, 1, 1);
-
-        valueJoint4 = new QLabel(tab_targets);
-        valueJoint4->setObjectName(QString::fromUtf8("valueJoint4"));
-
-        jointValuesLayout->addWidget(valueJoint4, 3, 1, 1, 1);
-
-        labelJoint5Value = new QLabel(tab_targets);
-        labelJoint5Value->setObjectName(QString::fromUtf8("labelJoint5Value"));
-
-        jointValuesLayout->addWidget(labelJoint5Value, 4, 0, 1, 1);
-
-        valueJoint5 = new QLabel(tab_targets);
-        valueJoint5->setObjectName(QString::fromUtf8("valueJoint5"));
-
-        jointValuesLayout->addWidget(valueJoint5, 4, 1, 1, 1);
+        jointValuesLayout->addWidget(valueJoint3, 4, 1, 1, 1);
 
         labelJoint6Value = new QLabel(tab_targets);
         labelJoint6Value->setObjectName(QString::fromUtf8("labelJoint6Value"));
 
-        jointValuesLayout->addWidget(labelJoint6Value, 5, 0, 1, 1);
+        jointValuesLayout->addWidget(labelJoint6Value, 7, 0, 1, 1);
+
+        valueJoint1 = new QLabel(tab_targets);
+        valueJoint1->setObjectName(QString::fromUtf8("valueJoint1"));
+
+        jointValuesLayout->addWidget(valueJoint1, 2, 1, 1, 1);
+
+        labelJoint4Value = new QLabel(tab_targets);
+        labelJoint4Value->setObjectName(QString::fromUtf8("labelJoint4Value"));
+
+        jointValuesLayout->addWidget(labelJoint4Value, 5, 0, 1, 1);
+
+        valueJoint2 = new QLabel(tab_targets);
+        valueJoint2->setObjectName(QString::fromUtf8("valueJoint2"));
+
+        jointValuesLayout->addWidget(valueJoint2, 3, 1, 1, 1);
 
         valueJoint6 = new QLabel(tab_targets);
         valueJoint6->setObjectName(QString::fromUtf8("valueJoint6"));
 
-        jointValuesLayout->addWidget(valueJoint6, 5, 1, 1, 1);
+        jointValuesLayout->addWidget(valueJoint6, 7, 1, 1, 1);
+
+        labelJoint3Value = new QLabel(tab_targets);
+        labelJoint3Value->setObjectName(QString::fromUtf8("labelJoint3Value"));
+
+        jointValuesLayout->addWidget(labelJoint3Value, 4, 0, 1, 1);
+
+        valueJoint4 = new QLabel(tab_targets);
+        valueJoint4->setObjectName(QString::fromUtf8("valueJoint4"));
+
+        jointValuesLayout->addWidget(valueJoint4, 5, 1, 1, 1);
+
+        labelJoint1Value = new QLabel(tab_targets);
+        labelJoint1Value->setObjectName(QString::fromUtf8("labelJoint1Value"));
+
+        jointValuesLayout->addWidget(labelJoint1Value, 2, 0, 1, 1);
+
+        labelJoint5Value = new QLabel(tab_targets);
+        labelJoint5Value->setObjectName(QString::fromUtf8("labelJoint5Value"));
+
+        jointValuesLayout->addWidget(labelJoint5Value, 6, 0, 1, 1);
+
+        labelJoint2Value = new QLabel(tab_targets);
+        labelJoint2Value->setObjectName(QString::fromUtf8("labelJoint2Value"));
+
+        jointValuesLayout->addWidget(labelJoint2Value, 3, 0, 1, 1);
+
+        valueJoint5 = new QLabel(tab_targets);
+        valueJoint5->setObjectName(QString::fromUtf8("valueJoint5"));
+
+        jointValuesLayout->addWidget(valueJoint5, 6, 1, 1, 1);
 
 
-        targetLayout->addLayout(jointValuesLayout);
+        verticalLayout_3->addLayout(jointValuesLayout);
+
+        jointValuesLayout_3 = new QGridLayout();
+        jointValuesLayout_3->setObjectName(QString::fromUtf8("jointValuesLayout_3"));
+        valueJoint3_3 = new QLabel(tab_targets);
+        valueJoint3_3->setObjectName(QString::fromUtf8("valueJoint3_3"));
+
+        jointValuesLayout_3->addWidget(valueJoint3_3, 2, 1, 1, 1);
+
+        labelJoint6Value_3 = new QLabel(tab_targets);
+        labelJoint6Value_3->setObjectName(QString::fromUtf8("labelJoint6Value_3"));
+
+        jointValuesLayout_3->addWidget(labelJoint6Value_3, 5, 0, 1, 1);
+
+        valueJoint1_3 = new QLabel(tab_targets);
+        valueJoint1_3->setObjectName(QString::fromUtf8("valueJoint1_3"));
+
+        jointValuesLayout_3->addWidget(valueJoint1_3, 0, 1, 1, 1);
+
+        labelJoint4Value_3 = new QLabel(tab_targets);
+        labelJoint4Value_3->setObjectName(QString::fromUtf8("labelJoint4Value_3"));
+
+        jointValuesLayout_3->addWidget(labelJoint4Value_3, 3, 0, 1, 1);
+
+        valueJoint2_3 = new QLabel(tab_targets);
+        valueJoint2_3->setObjectName(QString::fromUtf8("valueJoint2_3"));
+
+        jointValuesLayout_3->addWidget(valueJoint2_3, 1, 1, 1, 1);
+
+        valueJoint6_3 = new QLabel(tab_targets);
+        valueJoint6_3->setObjectName(QString::fromUtf8("valueJoint6_3"));
+
+        jointValuesLayout_3->addWidget(valueJoint6_3, 5, 1, 1, 1);
+
+        labelJoint3Value_3 = new QLabel(tab_targets);
+        labelJoint3Value_3->setObjectName(QString::fromUtf8("labelJoint3Value_3"));
+
+        jointValuesLayout_3->addWidget(labelJoint3Value_3, 2, 0, 1, 1);
+
+        valueJoint4_3 = new QLabel(tab_targets);
+        valueJoint4_3->setObjectName(QString::fromUtf8("valueJoint4_3"));
+
+        jointValuesLayout_3->addWidget(valueJoint4_3, 3, 1, 1, 1);
+
+        labelJoint1Value_3 = new QLabel(tab_targets);
+        labelJoint1Value_3->setObjectName(QString::fromUtf8("labelJoint1Value_3"));
+
+        jointValuesLayout_3->addWidget(labelJoint1Value_3, 0, 0, 1, 1);
+
+        labelJoint5Value_3 = new QLabel(tab_targets);
+        labelJoint5Value_3->setObjectName(QString::fromUtf8("labelJoint5Value_3"));
+
+        jointValuesLayout_3->addWidget(labelJoint5Value_3, 4, 0, 1, 1);
+
+        labelJoint2Value_3 = new QLabel(tab_targets);
+        labelJoint2Value_3->setObjectName(QString::fromUtf8("labelJoint2Value_3"));
+
+        jointValuesLayout_3->addWidget(labelJoint2Value_3, 1, 0, 1, 1);
+
+        valueJoint5_3 = new QLabel(tab_targets);
+        valueJoint5_3->setObjectName(QString::fromUtf8("valueJoint5_3"));
+
+        jointValuesLayout_3->addWidget(valueJoint5_3, 4, 1, 1, 1);
+
+
+        verticalLayout_3->addLayout(jointValuesLayout_3);
 
         textTargetValues = new QTextEdit(tab_targets);
         textTargetValues->setObjectName(QString::fromUtf8("textTargetValues"));
         textTargetValues->setReadOnly(true);
 
-        targetLayout->addWidget(textTargetValues);
+        verticalLayout_3->addWidget(textTargetValues);
 
         tabWidget->addTab(tab_targets, QString());
 
@@ -582,23 +666,36 @@ public:
         labelActiveSpeed->setText(QCoreApplication::translate("MainWindow", "Speed: 1.0x", nullptr));
         labelErrors->setText(QCoreApplication::translate("MainWindow", "Errors: None", nullptr));
         tabWidget->setTabText(tabWidget->indexOf(tab_control), QCoreApplication::translate("MainWindow", "Control", nullptr));
-        lineEditTargetName->setPlaceholderText(QCoreApplication::translate("MainWindow", "Enter target name...", nullptr));
-        btnSaveTarget->setText(QCoreApplication::translate("MainWindow", "Save Target", nullptr));
         btnShowJointValues->setText(QCoreApplication::translate("MainWindow", "Show Joint Values", nullptr));
         btnShowPoseValues->setText(QCoreApplication::translate("MainWindow", "Show Pose Values", nullptr));
+        lineEditTargetName->setPlaceholderText(QCoreApplication::translate("MainWindow", "Enter target name...", nullptr));
         btnGoToTarget->setText(QCoreApplication::translate("MainWindow", "Go to Target", nullptr));
-        labelJoint1Value->setText(QCoreApplication::translate("MainWindow", "Joint1:", nullptr));
-        valueJoint1->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
-        labelJoint2Value->setText(QCoreApplication::translate("MainWindow", "Joint2:", nullptr));
-        valueJoint2->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
-        labelJoint3Value->setText(QCoreApplication::translate("MainWindow", "Joint3:", nullptr));
+        btnSaveTarget->setText(QCoreApplication::translate("MainWindow", "Save joint Target", nullptr));
+        btnSaveTarget_2->setText(QCoreApplication::translate("MainWindow", "Save Pose Target", nullptr));
         valueJoint3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
-        labelJoint4Value->setText(QCoreApplication::translate("MainWindow", "Joint4:", nullptr));
-        valueJoint4->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
-        labelJoint5Value->setText(QCoreApplication::translate("MainWindow", "Joint5:", nullptr));
-        valueJoint5->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
         labelJoint6Value->setText(QCoreApplication::translate("MainWindow", "Joint6:", nullptr));
+        valueJoint1->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
+        labelJoint4Value->setText(QCoreApplication::translate("MainWindow", "Joint4:", nullptr));
+        valueJoint2->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
         valueJoint6->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
+        labelJoint3Value->setText(QCoreApplication::translate("MainWindow", "Joint3:", nullptr));
+        valueJoint4->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
+        labelJoint1Value->setText(QCoreApplication::translate("MainWindow", "Joint1:", nullptr));
+        labelJoint5Value->setText(QCoreApplication::translate("MainWindow", "Joint5:", nullptr));
+        labelJoint2Value->setText(QCoreApplication::translate("MainWindow", "Joint2:", nullptr));
+        valueJoint5->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
+        valueJoint3_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
+        labelJoint6Value_3->setText(QCoreApplication::translate("MainWindow", "Yaw:", nullptr));
+        valueJoint1_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
+        labelJoint4Value_3->setText(QCoreApplication::translate("MainWindow", "Roll:", nullptr));
+        valueJoint2_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
+        valueJoint6_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
+        labelJoint3Value_3->setText(QCoreApplication::translate("MainWindow", "Z:", nullptr));
+        valueJoint4_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
+        labelJoint1Value_3->setText(QCoreApplication::translate("MainWindow", "X:", nullptr));
+        labelJoint5Value_3->setText(QCoreApplication::translate("MainWindow", "Pitch:", nullptr));
+        labelJoint2Value_3->setText(QCoreApplication::translate("MainWindow", "Y:", nullptr));
+        valueJoint5_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
         tabWidget->setTabText(tabWidget->indexOf(tab_targets), QCoreApplication::translate("MainWindow", "Targets", nullptr));
     } // retranslateUi
 
