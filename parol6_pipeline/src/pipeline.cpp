@@ -214,8 +214,7 @@ private:
     RCLCPP_INFO(get_logger(), "Will attach model name: %s", current_model_name_.c_str());
 
     (void)callTrigger(start_pick_client_, "/start_picking", 30);
-    std::this_thread::sleep_for(std::chrono::milliseconds(
-        static_cast<int>((kPickSettleSec + kPickMotionWaitSec) * 1000)));
+    std::this_thread::sleep_for(0.4s);
 
     if (!attachDetach(current_model_name_, true)) {
       RCLCPP_WARN(get_logger(), "Attach (suction ON) reported failure for %s. Continuing.",
@@ -244,7 +243,7 @@ private:
       if (!moveToTargetAndWait("conveyor_3"))     return false;
     }
 
-    std::this_thread::sleep_for(200ms);
+    std::this_thread::sleep_for(0.2s);
     if (!attachDetach(current_model_name_, false)) {
       RCLCPP_WARN(get_logger(), "Detach reported failure for %s (maybe already detached). Continuing.",
                   current_model_name_.c_str());
@@ -273,9 +272,9 @@ private:
     }
 
     // 8) Tail feed before next vision
-    if (!spawnBox()) { RCLCPP_WARN(get_logger(), "Spawn failed in tail feed."); }
-    std::this_thread::sleep_for(4s);
-    moveConveyor("/conveyor2/MoveDistance", kConveyor2Step);
+    // if (!spawnBox()) { RCLCPP_WARN(get_logger(), "Spawn failed in tail feed."); }
+    // std::this_thread::sleep_for(2s);
+    // moveConveyor("/conveyor2/MoveDistance", kConveyor2Step);
 
     return true;
   }
@@ -379,6 +378,75 @@ private:
     }
 
     RCLCPP_INFO(this->get_logger(), "Successfully moved to target '%s'", target_name.c_str());
+    return true;
+  }
+
+  bool moveCartesianToTarget(const std::string &target_name) {
+    if (!targets_json_loaded_) {
+      RCLCPP_ERROR(this->get_logger(), "Targets.json not loaded yet!");
+      return false;
+    }
+
+    auto it = targets_json_.find(target_name);
+    if (it == targets_json_.end()) {
+      RCLCPP_ERROR(this->get_logger(), "Cartesian target '%s' not found in Targets.json", target_name.c_str());
+      return false;
+    }
+
+    const auto& data = it.value();
+    if (!data.is_array() || data.size() != 7) {
+      RCLCPP_ERROR(this->get_logger(), "Target '%s' must be an array of 7 values: [x, y, z, qx, qy, qz, qw]", target_name.c_str());
+      return false;
+    }
+
+    // Parse position and orientation
+    std::vector<double> pose_vals;
+    try {
+      for (const auto& val : data) {
+        pose_vals.push_back(val.get<double>());
+      }
+    } catch (const std::exception& e) {
+      RCLCPP_ERROR(this->get_logger(), "Failed to parse pose for '%s': %s", target_name.c_str(), e.what());
+      return false;
+    }
+
+    geometry_msgs::msg::Pose target_pose;
+    target_pose.position.x    = pose_vals[0];
+    target_pose.position.y    = pose_vals[1];
+    target_pose.position.z    = pose_vals[2];
+    target_pose.orientation.x = pose_vals[3];
+    target_pose.orientation.y = pose_vals[4];
+    target_pose.orientation.z = pose_vals[5];
+    target_pose.orientation.w = pose_vals[6];
+
+    // Create MoveGroupInterface
+    moveit::planning_interface::MoveGroupInterface move_group(
+        this->shared_from_this(),
+        "arm"  // ← Change this if your MoveIt group is named differently
+    );
+
+    // Set Cartesian target
+    move_group.setPoseTarget(target_pose);
+
+    moveit::planning_interface::MoveGroupInterface::Plan plan;
+
+    // Plan
+    if (move_group.plan(plan) != moveit::core::MoveItErrorCode::SUCCESS) {
+      RCLCPP_ERROR(this->get_logger(), "Planning to Cartesian target '%s' failed", target_name.c_str());
+      return false;
+    }
+
+    // Execute
+    if (move_group.execute(plan) != moveit::core::MoveItErrorCode::SUCCESS) {
+      RCLCPP_ERROR(this->get_logger(), "Execution to Cartesian target '%s' failed", target_name.c_str());
+      return false;
+    }
+
+    RCLCPP_INFO(this->get_logger(), "Successfully moved to Cartesian target '%s' at [%.3f, %.3f, %.3f]", 
+                target_name.c_str(), 
+                target_pose.position.x, 
+                target_pose.position.y, 
+                target_pose.position.z);
     return true;
   }
   

@@ -1,16 +1,15 @@
-
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
 #include <QMainWindow>
 #include <QTimer>
 #include <QPushButton>
+#include <QSlider>
 #include <vector>
 #include <map>
 #include <memory>
 #include <mutex>
 
-// ROS 2 includes
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
@@ -32,17 +31,23 @@ public:
     ~MainWindow();
 
 private slots:
+    // Target buttons
     void on_btnShowJointValues_clicked();
     void on_btnShowPoseValues_clicked();
-    void on_btnSaveJointTarget_clicked();
-    void on_btnSavePoseTarget_clicked();
+    void on_btnSaveTarget_clicked();
     void on_btnGoToTarget_clicked();
+    
 
+    // Servo buttons
     void on_btnServoOn_clicked();
     void on_btnServoOff_clicked();
 
+    // Jog buttons
     void onJogButtonPressed();
     void onJogButtonReleased();
+
+    // Speed slider
+    void on_sliderSpeed_valueChanged(int value);
 
 private:
     Ui::MainWindow *ui;
@@ -50,10 +55,12 @@ private:
     QString kTargetFilePath;
 
     std::vector<double> current_joint_values;
+    std::vector<double> current_pose_values; // x, y, z, roll, pitch, yaw
     std::map<QString, std::vector<double>> saved_joint_targets;
-    std::map<QString, QString> saved_pose_targets;
+    std::map<QString, std::vector<double>> saved_pose_targets;
 
     void updateJointLabels();
+    void updatePoseLabels();
     void sendJogCommand(double x, double y, double z, double rx, double ry, double rz);
     void jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
     void loadTargetsFromJson();
@@ -67,9 +74,6 @@ private:
     rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr servo_on_client_;
     rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr servo_off_client_;
     rclcpp_action::Client<control_msgs::action::FollowJointTrajectory>::SharedPtr trajectory_action_client_;
-
-    
-
 };
 
 #endif // MAINWINDOW_H
