@@ -172,8 +172,14 @@ void BoxDetector::imageCallback(
         double yaw = -rect.angle * M_PI / 180.0;
         if (yaw >  M_PI/2) yaw -= M_PI;
         if (yaw < -M_PI/2) yaw += M_PI;
-        q.setRPY(M_PI, 0.0, yaw);
-        q.normalize();
+        tf2::Quaternion q_cam;
+        q_cam.setRPY(0.0, 0.0, yaw); 
+
+        tf2::Quaternion grasp_offset;
+        grasp_offset.setRPY(0.0, 0.0, 0.0); 
+
+        q_cam = grasp_offset * q_cam;
+        q_cam.normalize();
 
         geometry_msgs::msg::PoseStamped cam_pose;
         cam_pose.header = rgb_msg->header;
@@ -181,21 +187,31 @@ void BoxDetector::imageCallback(
         cam_pose.pose.position.x = X;
         cam_pose.pose.position.y = Y;
         cam_pose.pose.position.z = Z;
-        cam_pose.pose.orientation = tf2::toMsg(q);
+        cam_pose.pose.orientation = tf2::toMsg(q_cam);
 
         try {
-          auto base_pose = tf_buffer_->transform(cam_pose, "base_link", tf2::durationFromSec(0.1));
-          double d = std::sqrt(
-              base_pose.pose.position.x * base_pose.pose.position.x +
-              base_pose.pose.position.y * base_pose.pose.position.y +
-              base_pose.pose.position.z * base_pose.pose.position.z);
+            auto base_pose = tf_buffer_->transform(cam_pose, "base_link", tf2::durationFromSec(0.1));
 
-          if (!best.has_value() || d < best->dist) {
-            best = Candidate{base_pose, color, d, rect};
-          }
+            tf2::Quaternion q_base;
+            tf2::fromMsg(base_pose.pose.orientation, q_base);
+            double roll_b, pitch_b, yaw_b;
+            tf2::Matrix3x3(q_base).getRPY(roll_b, pitch_b, yaw_b);
+            tf2::Quaternion q_fixed;
+            q_fixed.setRPY(M_PI, 0.0, 0.0);
+            q_fixed.normalize();
+            base_pose.pose.orientation = tf2::toMsg(q_fixed);
+
+            double d = std::sqrt(
+                base_pose.pose.position.x * base_pose.pose.position.x +
+                base_pose.pose.position.y * base_pose.pose.position.y +
+                base_pose.pose.position.z * base_pose.pose.position.z);
+
+            if (!best.has_value() || d < best->dist) {
+                best = Candidate{base_pose, color, d, rect};
+            }
         } catch (const tf2::TransformException& ex) {
-          RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000, "[%s] TF error: %s", color.c_str(), ex.what());
-          continue;
+            RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000, "[%s] TF error: %s", color.c_str(), ex.what());
+            continue;
         }
       }
     };

@@ -36,20 +36,6 @@ static double pos_distance(const geometry_msgs::msg::Pose &a,
   return std::sqrt(dx*dx + dy*dy + dz*dz);
 }
 
-static std::string now_local_str() {
-  auto now = std::chrono::system_clock::now();
-  std::time_t t = std::chrono::system_clock::to_time_t(now);
-  std::tm tm{};
-#ifdef _WIN32
-  localtime_s(&tm, &t);
-#else
-  localtime_r(&t, &tm);
-#endif
-  char buf[32];
-  std::strftime(buf, sizeof(buf), "%F %T", &tm);
-  return std::string(buf);
-}
-
 class PipelineNode : public rclcpp::Node {
 public:
   PipelineNode() : rclcpp::Node("pipeline_node") {
@@ -87,9 +73,6 @@ public:
     traj_pub_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>(
                   "/arm_controller/joint_trajectory", rclcpp::QoS(10));
 
-    analytics_pub_ = this->create_publisher<std_msgs::msg::String>("/analytics/event", rclcpp::QoS(50));
-
-
     start_service_ = this->create_service<std_srvs::srv::Trigger>(
     "start_pipeline",
     [this](const std_srvs::srv::Trigger::Request::SharedPtr,
@@ -113,22 +96,6 @@ public:
         res->success = true;
         res->message = "Pipeline stopped";
     });
-  }
-
-  void publishAnalyticsEvent(const std::string& evt,
-                            const std::string& model,
-                            const std::string& color="",
-                            const std::string& size="") {
-    nlohmann::json j = {
-      {"event", evt},
-      {"model", model},
-      {"color", color},
-      {"size",  size},
-      {"timestamp", now_local_str()} // reuse helper or implement similar
-    };
-    std_msgs::msg::String m;
-    m.data = j.dump();
-    analytics_pub_->publish(m);
   }
 
   void run() {
@@ -220,7 +187,6 @@ private:
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr info_sub_;
 
   rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr traj_pub_;
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr analytics_pub_;
 
   std::mutex vision_mutex_;
   geometry_msgs::msg::PoseStamped latest_pose_;
@@ -242,8 +208,6 @@ private:
   bool processPickDropCycle(const geometry_msgs::msg::PoseStamped& det_pose_in,
                             const std::string& det_color)
   {
-    publishAnalyticsEvent("detection", current_model_name_, det_color, /*size*/"");
-
     RCLCPP_INFO(get_logger(), "==== Executing cycle for color: %s ====", det_color.c_str());
 
     current_model_name_ = nextModelName(det_color);
@@ -253,8 +217,7 @@ private:
     std::this_thread::sleep_for(0.4s);
 
     if (!attachDetach(current_model_name_, true)) {
-      publishAnalyticsEvent("pick", current_model_name_);
-      RCLCPP_WARN(get_logger(), "Attach (suction ON) reported failure for %s. Continuing.",
+      RCLCPP_WARN(get_logger(), "Attach (suction ON) reported failureeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee for %s. Continuing.",
                   current_model_name_.c_str());
     } else {
       RCLCPP_INFO(get_logger(), "Attached (suction ON) for %s", current_model_name_.c_str());
@@ -282,7 +245,6 @@ private:
 
     std::this_thread::sleep_for(0.2s);
     if (!attachDetach(current_model_name_, false)) {
-      publishAnalyticsEvent("place", current_model_name_);
       RCLCPP_WARN(get_logger(), "Detach reported failure for %s (maybe already detached). Continuing.",
                   current_model_name_.c_str());
     } else {
@@ -593,9 +555,6 @@ private:
           (void)callTrigger(stop_det_client_, "/stop_detection", 3);
           vision_enabled_.store(false);
           RCLCPP_INFO(get_logger(), " Vision stopped (stable pose + color).");
-  
-          publishAnalyticsEvent("detection", nextModelName(cur_color), cur_color, /*size*/""); 
-  
           return std::make_pair(*stable_pose, cur_color);
         }
         if ((t_now - t_stable).seconds() >= kColorGraceSec) {
