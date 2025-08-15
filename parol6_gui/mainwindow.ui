@@ -18,58 +18,24 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_control">
        <attribute name="title">
         <string>Control</string>
        </attribute>
-       <layout class="QVBoxLayout" name="controlLayout">
+       <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
          <widget class="QGroupBox" name="groupBoxJointControl">
           <property name="title">
            <string>Joint Control</string>
           </property>
           <layout class="QGridLayout" name="gridLayoutJointControl">
-           <item row="0" column="0">
-            <widget class="QLabel" name="labelJoint1">
-             <property name="text">
-              <string>Joint 1:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QDoubleSpinBox" name="spinJoint1"/>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="labelJoint2">
-             <property name="text">
-              <string>Joint 2:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QDoubleSpinBox" name="spinJoint2"/>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="labelJoint3">
-             <property name="text">
-              <string>Joint 3:</string>
-             </property>
-            </widget>
+           <item row="3" column="1">
+            <widget class="QDoubleSpinBox" name="spinJoint4"/>
            </item>
            <item row="2" column="1">
             <widget class="QDoubleSpinBox" name="spinJoint3"/>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="labelJoint4">
-             <property name="text">
-              <string>Joint 4:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QDoubleSpinBox" name="spinJoint4"/>
            </item>
            <item row="4" column="0">
             <widget class="QLabel" name="labelJoint5">
@@ -78,8 +44,15 @@
              </property>
             </widget>
            </item>
-           <item row="4" column="1">
-            <widget class="QDoubleSpinBox" name="spinJoint5"/>
+           <item row="0" column="1">
+            <widget class="QDoubleSpinBox" name="spinJoint1"/>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="labelJoint4">
+             <property name="text">
+              <string>Joint 4:</string>
+             </property>
+            </widget>
            </item>
            <item row="5" column="0">
             <widget class="QLabel" name="labelJoint6">
@@ -88,8 +61,35 @@
              </property>
             </widget>
            </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="labelJoint1">
+             <property name="text">
+              <string>Joint 1:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QDoubleSpinBox" name="spinJoint2"/>
+           </item>
+           <item row="4" column="1">
+            <widget class="QDoubleSpinBox" name="spinJoint5"/>
+           </item>
            <item row="5" column="1">
             <widget class="QDoubleSpinBox" name="spinJoint6"/>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="labelJoint3">
+             <property name="text">
+              <string>Joint 3:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="labelJoint2">
+             <property name="text">
+              <string>Joint 2:</string>
+             </property>
+            </widget>
            </item>
            <item row="6" column="0" colspan="2">
             <widget class="QPushButton" name="btnApplyJointPositions">
@@ -107,35 +107,8 @@
            <string>Cartesian Pose Control</string>
           </property>
           <layout class="QGridLayout" name="gridLayoutPoseControl">
-           <item row="0" column="0">
-            <widget class="QLabel" name="labelX">
-             <property name="text">
-              <string>X:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QDoubleSpinBox" name="spinX"/>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="labelY">
-             <property name="text">
-              <string>Y:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QDoubleSpinBox" name="spinY"/>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="labelZ">
-             <property name="text">
-              <string>Z:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QDoubleSpinBox" name="spinZ"/>
+           <item row="3" column="1">
+            <widget class="QDoubleSpinBox" name="spinRoll"/>
            </item>
            <item row="3" column="0">
             <widget class="QLabel" name="labelRoll">
@@ -144,18 +117,28 @@
              </property>
             </widget>
            </item>
-           <item row="3" column="1">
-            <widget class="QDoubleSpinBox" name="spinRoll"/>
+           <item row="1" column="1">
+            <widget class="QDoubleSpinBox" name="spinY"/>
            </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="labelPitch">
+           <item row="0" column="1">
+            <widget class="QDoubleSpinBox" name="spinX"/>
+           </item>
+           <item row="6" column="0" colspan="2">
+            <widget class="QPushButton" name="btnMoveToPose">
              <property name="text">
-              <string>Pitch:</string>
+              <string>Move End-Effector</string>
              </property>
             </widget>
            </item>
-           <item row="4" column="1">
-            <widget class="QDoubleSpinBox" name="spinPitch"/>
+           <item row="2" column="1">
+            <widget class="QDoubleSpinBox" name="spinZ"/>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="labelZ">
+             <property name="text">
+              <string>Z:</string>
+             </property>
+            </widget>
            </item>
            <item row="5" column="0">
             <widget class="QLabel" name="labelYaw">
@@ -167,12 +150,29 @@
            <item row="5" column="1">
             <widget class="QDoubleSpinBox" name="spinYaw"/>
            </item>
-           <item row="6" column="0" colspan="2">
-            <widget class="QPushButton" name="btnMoveToPose">
+           <item row="0" column="0">
+            <widget class="QLabel" name="labelX">
              <property name="text">
-              <string>Move End-Effector</string>
+              <string>X:</string>
              </property>
             </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="labelY">
+             <property name="text">
+              <string>Y:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="labelPitch">
+             <property name="text">
+              <string>Pitch:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QDoubleSpinBox" name="spinPitch"/>
            </item>
           </layout>
          </widget>
@@ -183,31 +183,10 @@
            <string>Jog Controls</string>
           </property>
           <layout class="QGridLayout" name="gridLayoutJog">
-           <item row="0" column="0">
-            <widget class="QPushButton" name="btnJogXPlus">
-             <property name="text">
-              <string>X+</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QPushButton" name="btnJogXMinus">
-             <property name="text">
-              <string>X-</string>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="0">
             <widget class="QPushButton" name="btnJogYPlus">
              <property name="text">
               <string>Y+</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QPushButton" name="btnJogYMinus">
-             <property name="text">
-              <string>Y-</string>
              </property>
             </widget>
            </item>
@@ -218,6 +197,20 @@
              </property>
             </widget>
            </item>
+           <item row="4" column="0">
+            <widget class="QPushButton" name="btnJogPPlus">
+             <property name="text">
+              <string>Pitch+</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QPushButton" name="btnJogXMinus">
+             <property name="text">
+              <string>X-</string>
+             </property>
+            </widget>
+           </item>
            <item row="2" column="1">
             <widget class="QPushButton" name="btnJogZMinus">
              <property name="text">
@@ -225,31 +218,31 @@
              </property>
             </widget>
            </item>
-           <item row="3" column="0">
-            <widget class="QPushButton" name="btnJogRollPlus">
+           <item row="6" column="1">
+            <widget class="QPushButton" name="btnServoOff">
              <property name="text">
-              <string>Roll+</string>
+              <string>Servo Off</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QPushButton" name="btnJogPMinus">
+             <property name="text">
+              <string>Pitch-</string>
              </property>
             </widget>
            </item>
            <item row="3" column="1">
-            <widget class="QPushButton" name="btnJogRollMinus">
+            <widget class="QPushButton" name="btnJogRMinus">
              <property name="text">
               <string>Roll-</string>
              </property>
             </widget>
            </item>
-           <item row="4" column="0">
-            <widget class="QPushButton" name="btnJogPitchPlus">
+           <item row="0" column="0">
+            <widget class="QPushButton" name="btnJogXPlus">
              <property name="text">
-              <string>Pitch+</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="1">
-            <widget class="QPushButton" name="btnJogPitchMinus">
-             <property name="text">
-              <string>Pitch-</string>
+              <string>X+</string>
              </property>
             </widget>
            </item>
@@ -257,6 +250,27 @@
             <widget class="QPushButton" name="btnJogYawPlus">
              <property name="text">
               <string>Yaw+</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QPushButton" name="btnJogRPlus">
+             <property name="text">
+              <string>Roll+</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="0">
+            <widget class="QPushButton" name="btnServoOn">
+             <property name="text">
+              <string>Servo On</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QPushButton" name="btnJogYMinus">
+             <property name="text">
+              <string>Y-</string>
              </property>
             </widget>
            </item>
@@ -389,11 +403,49 @@
          </widget>
         </item>
         <item>
+         <widget class="QFrame" name="frame_2">
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
          <layout class="QGridLayout" name="jointValuesLayout">
-          <item row="4" column="1">
-           <widget class="QLabel" name="valueJoint3">
+          <item row="3" column="0">
+           <widget class="QLabel" name="labelJoint2Value">
             <property name="text">
-             <string>0.0</string>
+             <string>Joint2:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="labelJoint3Value">
+            <property name="text">
+             <string>Joint3:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="labelJoint4Value">
+            <property name="text">
+             <string>Joint4:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="labelJoint5Value">
+            <property name="text">
+             <string>Joint5:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="labelJoint1Value">
+            <property name="text">
+             <string>Joint1:</string>
             </property>
            </widget>
           </item>
@@ -411,15 +463,29 @@
             </property>
            </widget>
           </item>
-          <item row="5" column="0">
-           <widget class="QLabel" name="labelJoint4Value">
+          <item row="4" column="1">
+           <widget class="QLabel" name="valueJoint3">
             <property name="text">
-             <string>Joint4:</string>
+             <string>0.0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QLabel" name="valueJoint5">
+            <property name="text">
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="3" column="1">
            <widget class="QLabel" name="valueJoint2">
+            <property name="text">
+             <string>0.0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QLabel" name="valueJoint4">
             <property name="text">
              <string>0.0</string>
             </property>
@@ -432,49 +498,17 @@
             </property>
            </widget>
           </item>
-          <item row="4" column="0">
-           <widget class="QLabel" name="labelJoint3Value">
-            <property name="text">
-             <string>Joint3:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="1">
-           <widget class="QLabel" name="valueJoint4">
-            <property name="text">
-             <string>0.0</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="labelJoint1Value">
-            <property name="text">
-             <string>Joint1:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="0">
-           <widget class="QLabel" name="labelJoint5Value">
-            <property name="text">
-             <string>Joint5:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="labelJoint2Value">
-            <property name="text">
-             <string>Joint2:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="1">
-           <widget class="QLabel" name="valueJoint5">
-            <property name="text">
-             <string>0.0</string>
-            </property>
-           </widget>
-          </item>
          </layout>
+        </item>
+        <item>
+         <widget class="QFrame" name="frame">
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+         </widget>
         </item>
         <item>
          <layout class="QGridLayout" name="jointValuesLayout_3">
