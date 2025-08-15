@@ -281,7 +281,7 @@
   <joint name="tool0_fixed" type="fixed">
       <parent link="suction_gripper"/>
       <child link="tool0"/>
-      <origin xyz="0.1255425 -0.0011684999999999998 -0.0904575" rpy="-1.57080 0 1.5708"/>
+      <origin xyz="0.1255425 -0.0011684999999999998 -0.0904575" rpy="-1.5708 -3.14 -1.5708"/>
   </joint>
 
 
