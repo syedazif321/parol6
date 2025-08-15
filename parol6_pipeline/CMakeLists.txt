@@ -22,6 +22,8 @@ find_package(moveit_msgs REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(conveyorbelt_msgs REQUIRED)
 find_package(msg_gazebo REQUIRED)
+find_package(SQLite3 REQUIRED)
+
 
 
 include_directories(
@@ -72,6 +74,19 @@ target_link_libraries(pick_controller_node
   tf2_geometry_msgs::tf2_geometry_msgs
 )
 
+add_executable(analytics_logger_node src/analytics_logger_node.cpp)
+ament_target_dependencies(analytics_logger_node
+  rclcpp
+  std_msgs
+  std_srvs
+  nlohmann_json
+)
+
+target_link_libraries(analytics_logger_node
+  SQLite::SQLite3
+)
+
+
 add_executable(pipeline_node src/pipeline.cpp)
 ament_target_dependencies(pipeline_node
   rclcpp
@@ -96,6 +111,7 @@ install(TARGETS
   box_detector_node
   pick_controller_node
   pipeline_node
+  analytics_logger_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -106,5 +122,7 @@ install(DIRECTORY include/
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
 )
+
+
 
 ament_package()

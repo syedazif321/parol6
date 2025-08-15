@@ -6,8 +6,8 @@
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
 
-#ifndef UI_MAINWINW_H
-#define UI_MAINWINW_H
+#ifndef UI_MAINWINDOW_H
+#define UI_MAINWINDOW_H
 
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
@@ -23,6 +23,7 @@
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QSlider>
+#include <QtWidgets/QSpacerItem>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QTextEdit>
@@ -104,7 +105,6 @@ public:
     QPushButton *btnGoToTarget;
     QPushButton *btnSaveTarget;
     QPushButton *btnSaveTarget_2;
-    QFrame *frame_2;
     QGridLayout *jointValuesLayout;
     QLabel *labelJoint2Value;
     QLabel *labelJoint3Value;
@@ -118,20 +118,24 @@ public:
     QLabel *valueJoint2;
     QLabel *valueJoint4;
     QLabel *valueJoint6;
+    QSpacerItem *horizontalSpacer;
     QFrame *frame;
     QGridLayout *jointValuesLayout_3;
-    QLabel *valueJoint3_3;
-    QLabel *labelJoint6Value_3;
-    QLabel *valueJoint1_3;
-    QLabel *labelJoint4Value_3;
-    QLabel *valueJoint2_3;
     QLabel *valueJoint6_3;
     QLabel *labelJoint3Value_3;
-    QLabel *valueJoint4_3;
-    QLabel *labelJoint1Value_3;
     QLabel *labelJoint5Value_3;
     QLabel *labelJoint2Value_3;
+    QLabel *valueJoint1_3;
     QLabel *valueJoint5_3;
+    QLabel *valueJoint3_3;
+    QLabel *labelJoint4Value_3;
+    QLabel *valueJoint4_3;
+    QLabel *labelJoint6Value_3;
+    QLabel *labelJoint1Value_3;
+    QLabel *valueJoint2_3;
+    QSpacerItem *horizontalSpacer_2;
+    QPushButton *btnSaveTarget_4;
+    QPushButton *btnSaveTarget_3;
     QTextEdit *textTargetValues;
     QMenuBar *menubar;
     QStatusBar *statusbar;
@@ -140,7 +144,7 @@ public:
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QString::fromUtf8("MainWindow"));
-        MainWindow->resize(507, 921);
+        MainWindow->resize(436, 952);
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
         verticalLayout = new QVBoxLayout(centralwidget);
@@ -466,13 +470,6 @@ public:
 
         verticalLayout_3->addWidget(btnSaveTarget_2);
 
-        frame_2 = new QFrame(tab_targets);
-        frame_2->setObjectName(QString::fromUtf8("frame_2"));
-        frame_2->setFrameShape(QFrame::StyledPanel);
-        frame_2->setFrameShadow(QFrame::Raised);
-
-        verticalLayout_3->addWidget(frame_2);
-
         jointValuesLayout = new QGridLayout();
         jointValuesLayout->setObjectName(QString::fromUtf8("jointValuesLayout"));
         labelJoint2Value = new QLabel(tab_targets);
@@ -538,77 +535,90 @@ public:
 
         verticalLayout_3->addLayout(jointValuesLayout);
 
+        horizontalSpacer = new QSpacerItem(393, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+        verticalLayout_3->addItem(horizontalSpacer);
+
         frame = new QFrame(tab_targets);
         frame->setObjectName(QString::fromUtf8("frame"));
-        frame->setFrameShape(QFrame::StyledPanel);
-        frame->setFrameShadow(QFrame::Raised);
-
-        verticalLayout_3->addWidget(frame);
-
-        jointValuesLayout_3 = new QGridLayout();
+        jointValuesLayout_3 = new QGridLayout(frame);
         jointValuesLayout_3->setObjectName(QString::fromUtf8("jointValuesLayout_3"));
-        valueJoint3_3 = new QLabel(tab_targets);
-        valueJoint3_3->setObjectName(QString::fromUtf8("valueJoint3_3"));
-
-        jointValuesLayout_3->addWidget(valueJoint3_3, 2, 1, 1, 1);
-
-        labelJoint6Value_3 = new QLabel(tab_targets);
-        labelJoint6Value_3->setObjectName(QString::fromUtf8("labelJoint6Value_3"));
-
-        jointValuesLayout_3->addWidget(labelJoint6Value_3, 5, 0, 1, 1);
-
-        valueJoint1_3 = new QLabel(tab_targets);
-        valueJoint1_3->setObjectName(QString::fromUtf8("valueJoint1_3"));
-
-        jointValuesLayout_3->addWidget(valueJoint1_3, 0, 1, 1, 1);
-
-        labelJoint4Value_3 = new QLabel(tab_targets);
-        labelJoint4Value_3->setObjectName(QString::fromUtf8("labelJoint4Value_3"));
-
-        jointValuesLayout_3->addWidget(labelJoint4Value_3, 3, 0, 1, 1);
-
-        valueJoint2_3 = new QLabel(tab_targets);
-        valueJoint2_3->setObjectName(QString::fromUtf8("valueJoint2_3"));
-
-        jointValuesLayout_3->addWidget(valueJoint2_3, 1, 1, 1, 1);
-
-        valueJoint6_3 = new QLabel(tab_targets);
+        valueJoint6_3 = new QLabel(frame);
         valueJoint6_3->setObjectName(QString::fromUtf8("valueJoint6_3"));
 
         jointValuesLayout_3->addWidget(valueJoint6_3, 5, 1, 1, 1);
 
-        labelJoint3Value_3 = new QLabel(tab_targets);
+        labelJoint3Value_3 = new QLabel(frame);
         labelJoint3Value_3->setObjectName(QString::fromUtf8("labelJoint3Value_3"));
 
         jointValuesLayout_3->addWidget(labelJoint3Value_3, 2, 0, 1, 1);
 
-        valueJoint4_3 = new QLabel(tab_targets);
-        valueJoint4_3->setObjectName(QString::fromUtf8("valueJoint4_3"));
-
-        jointValuesLayout_3->addWidget(valueJoint4_3, 3, 1, 1, 1);
-
-        labelJoint1Value_3 = new QLabel(tab_targets);
-        labelJoint1Value_3->setObjectName(QString::fromUtf8("labelJoint1Value_3"));
-
-        jointValuesLayout_3->addWidget(labelJoint1Value_3, 0, 0, 1, 1);
-
-        labelJoint5Value_3 = new QLabel(tab_targets);
+        labelJoint5Value_3 = new QLabel(frame);
         labelJoint5Value_3->setObjectName(QString::fromUtf8("labelJoint5Value_3"));
 
         jointValuesLayout_3->addWidget(labelJoint5Value_3, 4, 0, 1, 1);
 
-        labelJoint2Value_3 = new QLabel(tab_targets);
+        labelJoint2Value_3 = new QLabel(frame);
         labelJoint2Value_3->setObjectName(QString::fromUtf8("labelJoint2Value_3"));
 
         jointValuesLayout_3->addWidget(labelJoint2Value_3, 1, 0, 1, 1);
 
-        valueJoint5_3 = new QLabel(tab_targets);
+        valueJoint1_3 = new QLabel(frame);
+        valueJoint1_3->setObjectName(QString::fromUtf8("valueJoint1_3"));
+
+        jointValuesLayout_3->addWidget(valueJoint1_3, 0, 1, 1, 1);
+
+        valueJoint5_3 = new QLabel(frame);
         valueJoint5_3->setObjectName(QString::fromUtf8("valueJoint5_3"));
 
         jointValuesLayout_3->addWidget(valueJoint5_3, 4, 1, 1, 1);
 
+        valueJoint3_3 = new QLabel(frame);
+        valueJoint3_3->setObjectName(QString::fromUtf8("valueJoint3_3"));
 
-        verticalLayout_3->addLayout(jointValuesLayout_3);
+        jointValuesLayout_3->addWidget(valueJoint3_3, 2, 1, 1, 1);
+
+        labelJoint4Value_3 = new QLabel(frame);
+        labelJoint4Value_3->setObjectName(QString::fromUtf8("labelJoint4Value_3"));
+
+        jointValuesLayout_3->addWidget(labelJoint4Value_3, 3, 0, 1, 1);
+
+        valueJoint4_3 = new QLabel(frame);
+        valueJoint4_3->setObjectName(QString::fromUtf8("valueJoint4_3"));
+
+        jointValuesLayout_3->addWidget(valueJoint4_3, 3, 1, 1, 1);
+
+        labelJoint6Value_3 = new QLabel(frame);
+        labelJoint6Value_3->setObjectName(QString::fromUtf8("labelJoint6Value_3"));
+
+        jointValuesLayout_3->addWidget(labelJoint6Value_3, 5, 0, 1, 1);
+
+        labelJoint1Value_3 = new QLabel(frame);
+        labelJoint1Value_3->setObjectName(QString::fromUtf8("labelJoint1Value_3"));
+
+        jointValuesLayout_3->addWidget(labelJoint1Value_3, 0, 0, 1, 1);
+
+        valueJoint2_3 = new QLabel(frame);
+        valueJoint2_3->setObjectName(QString::fromUtf8("valueJoint2_3"));
+
+        jointValuesLayout_3->addWidget(valueJoint2_3, 1, 1, 1, 1);
+
+
+        verticalLayout_3->addWidget(frame);
+
+        horizontalSpacer_2 = new QSpacerItem(393, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+        verticalLayout_3->addItem(horizontalSpacer_2);
+
+        btnSaveTarget_4 = new QPushButton(tab_targets);
+        btnSaveTarget_4->setObjectName(QString::fromUtf8("btnSaveTarget_4"));
+
+        verticalLayout_3->addWidget(btnSaveTarget_4);
+
+        btnSaveTarget_3 = new QPushButton(tab_targets);
+        btnSaveTarget_3->setObjectName(QString::fromUtf8("btnSaveTarget_3"));
+
+        verticalLayout_3->addWidget(btnSaveTarget_3);
 
         textTargetValues = new QTextEdit(tab_targets);
         textTargetValues->setObjectName(QString::fromUtf8("textTargetValues"));
@@ -623,7 +633,7 @@ public:
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName(QString::fromUtf8("menubar"));
-        menubar->setGeometry(QRect(0, 0, 507, 22));
+        menubar->setGeometry(QRect(0, 0, 436, 22));
         MainWindow->setMenuBar(menubar);
         statusbar = new QStatusBar(MainWindow);
         statusbar->setObjectName(QString::fromUtf8("statusbar"));
@@ -631,7 +641,7 @@ public:
 
         retranslateUi(MainWindow);
 
-        tabWidget->setCurrentIndex(0);
+        tabWidget->setCurrentIndex(1);
 
 
         QMetaObject::connectSlotsByName(MainWindow);
@@ -695,18 +705,20 @@ public:
         valueJoint2->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
         valueJoint4->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
         valueJoint6->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
-        valueJoint3_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
-        labelJoint6Value_3->setText(QCoreApplication::translate("MainWindow", "Yaw:", nullptr));
-        valueJoint1_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
-        labelJoint4Value_3->setText(QCoreApplication::translate("MainWindow", "Roll:", nullptr));
-        valueJoint2_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
         valueJoint6_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
         labelJoint3Value_3->setText(QCoreApplication::translate("MainWindow", "Z:", nullptr));
-        valueJoint4_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
-        labelJoint1Value_3->setText(QCoreApplication::translate("MainWindow", "X:", nullptr));
         labelJoint5Value_3->setText(QCoreApplication::translate("MainWindow", "Pitch:", nullptr));
         labelJoint2Value_3->setText(QCoreApplication::translate("MainWindow", "Y:", nullptr));
+        valueJoint1_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
         valueJoint5_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
+        valueJoint3_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
+        labelJoint4Value_3->setText(QCoreApplication::translate("MainWindow", "Roll:", nullptr));
+        valueJoint4_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
+        labelJoint6Value_3->setText(QCoreApplication::translate("MainWindow", "Yaw:", nullptr));
+        labelJoint1Value_3->setText(QCoreApplication::translate("MainWindow", "X:", nullptr));
+        valueJoint2_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
+        btnSaveTarget_4->setText(QCoreApplication::translate("MainWindow", "Stop Program", nullptr));
+        btnSaveTarget_3->setText(QCoreApplication::translate("MainWindow", "Start Progarm", nullptr));
         tabWidget->setTabText(tabWidget->indexOf(tab_targets), QCoreApplication::translate("MainWindow", "Targets", nullptr));
     } // retranslateUi
 

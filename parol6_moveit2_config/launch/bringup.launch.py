@@ -183,6 +183,20 @@ def generate_launch_description():
             {"use_sim_time": use_sim} 
         ]
     )
+
+    box_detector_node = Node(
+        package="parol6_pipeline",
+        executable="box_detector_node",
+        name="box_detector",
+        output="screen",
+        parameters=[
+            robot_description,
+            robot_description_semantic,
+            {"robot_description_kinematics": kinematics_yaml},
+            joint_limits,
+            {"use_sim_time": use_sim}
+        ]
+    )
     pipeline_node = Node(
         package='parol6_pipeline',
         executable='pipeline_node',
@@ -190,6 +204,19 @@ def generate_launch_description():
         parameters=[
             robot_description,
             robot_description_semantic,
+        ]
+    )
+
+    analytics_logger_node = Node(
+        package='parol6_pipeline',
+        executable='analytics_logger_node',
+        output='screen',
+        parameters=[
+            robot_description,
+            robot_description_semantic,
+            {"robot_description_kinematics": kinematics_yaml},
+            joint_limits,
+            {"use_sim_time": use_sim}
         ]
     )
 
@@ -204,6 +231,8 @@ def generate_launch_description():
         servo_node,
         static_tf_camera_mount,
         pick_controller_node,
+        box_detector_node,
         pipeline_node,
+        analytics_logger_node
 
     ])
