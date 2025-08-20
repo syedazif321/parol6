@@ -23,7 +23,7 @@ find_package(nlohmann_json REQUIRED)
 find_package(conveyorbelt_msgs REQUIRED)
 find_package(msg_gazebo REQUIRED)
 find_package(SQLite3 REQUIRED)
-find_package(builtin_interfaces REQUIRED)  # for builtin_interfaces::msg::Time in headers
+find_package(builtin_interfaces REQUIRED)  
 
 include_directories(
   include
@@ -31,7 +31,7 @@ include_directories(
   ${moveit_ros_planning_interface_INCLUDE_DIRS}
 )
 
-# --------- existing nodes (unchanged) ----------
+
 add_executable(box_detector_node src/box_detector.cpp)
 ament_target_dependencies(box_detector_node
   rclcpp
@@ -82,7 +82,7 @@ target_link_libraries(analytics_logger_node
   SQLite::SQLite3
 )
 
-# --------- NEW: FSM node (replaces old pipeline_node) ----------
+
 add_executable(pipeline_fsm_node src/pipeline_fsm_node.cpp)
 ament_target_dependencies(pipeline_fsm_node
   rclcpp
@@ -96,7 +96,7 @@ ament_target_dependencies(pipeline_fsm_node
   builtin_interfaces
 )
 
-# If your custom messages export build targets, keep these guards:
+
 if(conveyorbelt_msgs_EXPORTED_TARGETS)
   add_dependencies(pipeline_fsm_node ${conveyorbelt_msgs_EXPORTED_TARGETS})
 endif()
@@ -104,7 +104,6 @@ if(msg_gazebo_EXPORTED_TARGETS)
   add_dependencies(pipeline_fsm_node ${msg_gazebo_EXPORTED_TARGETS})
 endif()
 
-# --------- install targets ----------
 install(TARGETS
   box_detector_node
   pick_controller_node

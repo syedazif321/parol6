@@ -2,6 +2,10 @@
 #include <unordered_map>
 #include <std_msgs/msg/float64.hpp>
 #include <std_msgs/msg/int32.hpp>
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 
 class PipelineFSM : public rclcpp::Node {
 public:
@@ -16,6 +20,7 @@ public:
     // Parameters
     targets_json_path_ = this->declare_parameter<std::string>(
       "targets_json_path", "/home/azif/projetcs/parol6/robot_data/Targets.json");
+    pub_event_ = this->create_publisher<std_msgs::msg::String>("/analytics/event", 10);
 
     kVisionWindowSec_   = this->declare_parameter<double>("vision_window_sec", 7.0);
     kVisionWarmupSec_   = this->declare_parameter<double>("vision_warmup_sec", 5.0);
@@ -97,6 +102,17 @@ private:
     WAIT
   };
 
+  // Helper function to get the current local time
+  std::string now_local_str() const {
+    auto now = std::chrono::system_clock::now();
+    std::time_t t = std::chrono::system_clock::to_time_t(now);
+    std::tm tm{};
+    localtime_r(&t, &tm); // for Linux and MacOS, use `localtime_r`
+    char buf[32];
+    std::strftime(buf, sizeof(buf), "%F %T", &tm);
+    return std::string(buf);
+  }
+
   void beginWait(double seconds, State after) {
     wait_until_ = this->now() + rclcpp::Duration::from_seconds(seconds);
     after_wait_ = after;
@@ -160,6 +176,21 @@ private:
     }
   }
 
+  void stepCycleVision() {
+    auto vd = vision_.runWindow(kVisionWarmupSec_, kVisionWindowSec_, kStablePosTol_, kStableMinCount_, kColorGraceSec_);
+    if (!vd) {
+      RCLCPP_WARN(get_logger(), "CYCLE_VISION: no detection; retrying...");
+      std::this_thread::sleep_for(500ms);
+      return;
+    }
+    det_pose_  = vd->first;
+    det_color_ = vd->second;
+    model_name_ = nextModelName(det_color_);
+    RCLCPP_INFO(get_logger(), "CYCLE_VISION: color=%s model=%s", det_color_.c_str(), model_name_.c_str());
+    state_ = State::START_PICK;
+  }
+
+
   void stepInitFeed() {
     if (init_feed_remaining_ <= 0) {
       RCLCPP_INFO(get_logger(), "INIT_FEED done -> VISION_FIXED");
@@ -179,31 +210,33 @@ private:
 
   void stepVisionFixed() {
     auto vd = vision_.runFixed(4.0, 2.0);
-    if (!vd) { RCLCPP_ERROR(get_logger(), "VISION_FIXED: no detection"); running_.store(false); return; }
-    det_pose_  = vd->first;
-    det_color_ = vd->second;
-    model_name_ = nextModelName(det_color_);
-    RCLCPP_INFO(get_logger(), "VISION_FIXED: color=%s model=%s", det_color_.c_str(), model_name_.c_str());
-    state_ = State::START_PICK;
-  }
-
-  void stepCycleVision() {
-    auto vd = vision_.runWindow(kVisionWarmupSec_, kVisionWindowSec_, kStablePosTol_, kStableMinCount_, kColorGraceSec_);
-    if (!vd) {
-      RCLCPP_WARN(get_logger(), "CYCLE_VISION: no detection; retrying...");
-      std::this_thread::sleep_for(500ms);
-      return;
+    if (!vd) { 
+      RCLCPP_ERROR(get_logger(), "VISION_FIXED: no detection"); 
+      running_.store(false); 
+      return; 
     }
     det_pose_  = vd->first;
     det_color_ = vd->second;
     model_name_ = nextModelName(det_color_);
-    RCLCPP_INFO(get_logger(), "CYCLE_VISION: color=%s model=%s", det_color_.c_str(), model_name_.c_str());
+    RCLCPP_INFO(get_logger(), "VISION_FIXED: color=%s model=%s", det_color_.c_str(), model_name_.c_str());
+
+    // Publish detection event
+    auto msg = std::make_shared<std_msgs::msg::String>();
+    msg->data = R"({"event": "detection", "model": ")" + model_name_ + R"(", "color": ")" + det_color_ + R"(", "size": "small", "timestamp": ")" + now_local_str() + R"("})";
+    pub_event_->publish(*msg); // Assuming pub_event_ is properly initialized
+
     state_ = State::START_PICK;
   }
 
   void stepStartPick() {
     RCLCPP_INFO(get_logger(), "START_PICK: triggering /start_picking");
     (void)gripper_.startPicking(30);
+
+    // Publish pick event
+    auto msg = std::make_shared<std_msgs::msg::String>();
+    msg->data = R"({"event": "pick", "model": ")" + model_name_ + R"(", "color": ")" + det_color_ + R"(", "size": "small", "timestamp": ")" + now_local_str() + R"("})";
+    pub_event_->publish(*msg); // Publish pick event
+
     std::this_thread::sleep_for(400ms);
     state_ = State::ATTACH;
   }
@@ -299,6 +332,10 @@ private:
     }
     if (!motion_.planAndExecuteJoints(jf, "return_fin")) { running_.store(false); return; }
     if (!motion_.planAndExecuteJoints(jp, "return_pre")) { running_.store(false); return; }
+    auto msg = std::make_shared<std_msgs::msg::String>();
+    msg->data = R"({"event": "place", "model": ")" + model_name_ + R"(", "color": ")" + det_color_ + R"(", "size": "small", "timestamp": ")" + now_local_str() + R"("})";
+    pub_event_->publish(*msg); // Publish place event
+
     state_ = State::RETURN_HOME;
   }
 
@@ -329,6 +366,7 @@ private:
 
   // services
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_srv_, stop_srv_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_event_;
 
   // subsystems
   TargetDB         target_db_;

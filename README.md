@@ -91,3 +91,5 @@ ros2 service call /start_picking std_srvs/srv/Trigger "{}"
 ros2 run parol6_pipeline pipeline_node
 ros2 service call /start_detection std_srvs/srv/Trigger "{}"
 
+http://127.0.0.1:5000/
+python3 app.py
