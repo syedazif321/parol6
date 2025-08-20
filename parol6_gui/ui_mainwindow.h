@@ -42,50 +42,50 @@ public:
     QVBoxLayout *verticalLayout_4;
     QGroupBox *groupBoxJointControl;
     QGridLayout *gridLayoutJointControl;
-    QDoubleSpinBox *spinJoint4;
-    QDoubleSpinBox *spinJoint3;
-    QLabel *labelJoint5;
-    QDoubleSpinBox *spinJoint1;
-    QLabel *labelJoint4;
-    QLabel *labelJoint6;
-    QLabel *labelJoint1;
-    QDoubleSpinBox *spinJoint2;
-    QDoubleSpinBox *spinJoint5;
-    QDoubleSpinBox *spinJoint6;
     QLabel *labelJoint3;
-    QLabel *labelJoint2;
     QPushButton *btnApplyJointPositions;
+    QLabel *labelJoint4;
+    QLabel *labelJoint2;
+    QDoubleSpinBox *spinJoint4;
+    QLabel *labelJoint5;
+    QDoubleSpinBox *spinJoint5;
+    QLabel *labelJoint1;
+    QLabel *labelJoint6;
+    QDoubleSpinBox *spinJoint6;
+    QDoubleSpinBox *spinJoint3;
+    QDoubleSpinBox *spinJoint1;
+    QDoubleSpinBox *spinJoint2;
     QGroupBox *groupBoxPoseControl;
     QGridLayout *gridLayoutPoseControl;
-    QDoubleSpinBox *spinRoll;
-    QLabel *labelRoll;
-    QDoubleSpinBox *spinY;
-    QDoubleSpinBox *spinX;
-    QPushButton *btnMoveToPose;
     QDoubleSpinBox *spinZ;
-    QLabel *labelZ;
+    QLabel *labelRoll;
+    QPushButton *btnMoveToPose;
+    QLabel *labelPitch;
     QLabel *labelYaw;
-    QDoubleSpinBox *spinYaw;
+    QDoubleSpinBox *spinPitch;
     QLabel *labelX;
     QLabel *labelY;
-    QLabel *labelPitch;
-    QDoubleSpinBox *spinPitch;
+    QDoubleSpinBox *spinRoll;
+    QDoubleSpinBox *spinX;
+    QLabel *labelZ;
+    QDoubleSpinBox *spinYaw;
+    QDoubleSpinBox *spinY;
     QGroupBox *groupBoxJogControls;
     QGridLayout *gridLayoutJog;
-    QPushButton *btnJogYPlus;
-    QPushButton *btnJogZPlus;
-    QPushButton *btnJogPPlus;
-    QPushButton *btnJogXMinus;
-    QPushButton *btnJogZMinus;
-    QPushButton *btnServoOff;
-    QPushButton *btnJogPMinus;
-    QPushButton *btnJogRMinus;
     QPushButton *btnJogXPlus;
-    QPushButton *btnJogYawPlus;
     QPushButton *btnJogRPlus;
-    QPushButton *btnServoOn;
-    QPushButton *btnJogYMinus;
+    QPushButton *btnJogPMinus;
     QPushButton *btnJogYawMinus;
+    QPushButton *btnServoOff;
+    QPushButton *btnJogZMinus;
+    QPushButton *btnJogXMinus;
+    QPushButton *btnJogYawPlus;
+    QPushButton *btnJogPPlus;
+    QPushButton *btnJogYMinus;
+    QPushButton *btnJogZPlus;
+    QPushButton *btnJogRMinus;
+    QPushButton *btnJogYPlus;
+    QPushButton *btnServoOn;
     QHBoxLayout *speedLayout;
     QLabel *labelSpeed;
     QSlider *sliderSpeed;
@@ -135,7 +135,7 @@ public:
     QLabel *valueJoint2_3;
     QSpacerItem *horizontalSpacer_2;
     QPushButton *btnStartProgram;
-    QPushButton *btnSopProgram;
+    QPushButton *btnStopProgram;
     QTextEdit *textTargetValues;
     QMenuBar *menubar;
     QStatusBar *statusbar;
@@ -159,70 +159,85 @@ public:
         groupBoxJointControl->setObjectName(QString::fromUtf8("groupBoxJointControl"));
         gridLayoutJointControl = new QGridLayout(groupBoxJointControl);
         gridLayoutJointControl->setObjectName(QString::fromUtf8("gridLayoutJointControl"));
-        spinJoint4 = new QDoubleSpinBox(groupBoxJointControl);
-        spinJoint4->setObjectName(QString::fromUtf8("spinJoint4"));
+        labelJoint3 = new QLabel(groupBoxJointControl);
+        labelJoint3->setObjectName(QString::fromUtf8("labelJoint3"));
 
-        gridLayoutJointControl->addWidget(spinJoint4, 3, 1, 1, 1);
+        gridLayoutJointControl->addWidget(labelJoint3, 2, 0, 1, 1);
 
-        spinJoint3 = new QDoubleSpinBox(groupBoxJointControl);
-        spinJoint3->setObjectName(QString::fromUtf8("spinJoint3"));
+        btnApplyJointPositions = new QPushButton(groupBoxJointControl);
+        btnApplyJointPositions->setObjectName(QString::fromUtf8("btnApplyJointPositions"));
 
-        gridLayoutJointControl->addWidget(spinJoint3, 2, 1, 1, 1);
-
-        labelJoint5 = new QLabel(groupBoxJointControl);
-        labelJoint5->setObjectName(QString::fromUtf8("labelJoint5"));
-
-        gridLayoutJointControl->addWidget(labelJoint5, 4, 0, 1, 1);
-
-        spinJoint1 = new QDoubleSpinBox(groupBoxJointControl);
-        spinJoint1->setObjectName(QString::fromUtf8("spinJoint1"));
-
-        gridLayoutJointControl->addWidget(spinJoint1, 0, 1, 1, 1);
+        gridLayoutJointControl->addWidget(btnApplyJointPositions, 6, 0, 1, 2);
 
         labelJoint4 = new QLabel(groupBoxJointControl);
         labelJoint4->setObjectName(QString::fromUtf8("labelJoint4"));
 
         gridLayoutJointControl->addWidget(labelJoint4, 3, 0, 1, 1);
 
-        labelJoint6 = new QLabel(groupBoxJointControl);
-        labelJoint6->setObjectName(QString::fromUtf8("labelJoint6"));
+        labelJoint2 = new QLabel(groupBoxJointControl);
+        labelJoint2->setObjectName(QString::fromUtf8("labelJoint2"));
 
-        gridLayoutJointControl->addWidget(labelJoint6, 5, 0, 1, 1);
+        gridLayoutJointControl->addWidget(labelJoint2, 1, 0, 1, 1);
+
+        spinJoint4 = new QDoubleSpinBox(groupBoxJointControl);
+        spinJoint4->setObjectName(QString::fromUtf8("spinJoint4"));
+        spinJoint4->setDecimals(3);
+        spinJoint4->setMinimum(-180.000000000000000);
+
+        gridLayoutJointControl->addWidget(spinJoint4, 3, 1, 1, 1);
+
+        labelJoint5 = new QLabel(groupBoxJointControl);
+        labelJoint5->setObjectName(QString::fromUtf8("labelJoint5"));
+
+        gridLayoutJointControl->addWidget(labelJoint5, 4, 0, 1, 1);
+
+        spinJoint5 = new QDoubleSpinBox(groupBoxJointControl);
+        spinJoint5->setObjectName(QString::fromUtf8("spinJoint5"));
+        spinJoint5->setDecimals(3);
+        spinJoint5->setMinimum(-180.000000000000000);
+
+        gridLayoutJointControl->addWidget(spinJoint5, 4, 1, 1, 1);
 
         labelJoint1 = new QLabel(groupBoxJointControl);
         labelJoint1->setObjectName(QString::fromUtf8("labelJoint1"));
 
         gridLayoutJointControl->addWidget(labelJoint1, 0, 0, 1, 1);
 
-        spinJoint2 = new QDoubleSpinBox(groupBoxJointControl);
-        spinJoint2->setObjectName(QString::fromUtf8("spinJoint2"));
+        labelJoint6 = new QLabel(groupBoxJointControl);
+        labelJoint6->setObjectName(QString::fromUtf8("labelJoint6"));
 
-        gridLayoutJointControl->addWidget(spinJoint2, 1, 1, 1, 1);
-
-        spinJoint5 = new QDoubleSpinBox(groupBoxJointControl);
-        spinJoint5->setObjectName(QString::fromUtf8("spinJoint5"));
-
-        gridLayoutJointControl->addWidget(spinJoint5, 4, 1, 1, 1);
+        gridLayoutJointControl->addWidget(labelJoint6, 5, 0, 1, 1);
 
         spinJoint6 = new QDoubleSpinBox(groupBoxJointControl);
         spinJoint6->setObjectName(QString::fromUtf8("spinJoint6"));
+        spinJoint6->setDecimals(3);
+        spinJoint6->setMinimum(-180.000000000000000);
 
         gridLayoutJointControl->addWidget(spinJoint6, 5, 1, 1, 1);
 
-        labelJoint3 = new QLabel(groupBoxJointControl);
-        labelJoint3->setObjectName(QString::fromUtf8("labelJoint3"));
+        spinJoint3 = new QDoubleSpinBox(groupBoxJointControl);
+        spinJoint3->setObjectName(QString::fromUtf8("spinJoint3"));
+        spinJoint3->setDecimals(3);
+        spinJoint3->setMinimum(-180.000000000000000);
 
-        gridLayoutJointControl->addWidget(labelJoint3, 2, 0, 1, 1);
+        gridLayoutJointControl->addWidget(spinJoint3, 2, 1, 1, 1);
 
-        labelJoint2 = new QLabel(groupBoxJointControl);
-        labelJoint2->setObjectName(QString::fromUtf8("labelJoint2"));
+        spinJoint1 = new QDoubleSpinBox(groupBoxJointControl);
+        spinJoint1->setObjectName(QString::fromUtf8("spinJoint1"));
+        spinJoint1->setDecimals(3);
+        spinJoint1->setMinimum(-180.000000000000000);
+        spinJoint1->setMaximum(180.000000000000000);
+        spinJoint1->setSingleStep(0.100000000000000);
 
-        gridLayoutJointControl->addWidget(labelJoint2, 1, 0, 1, 1);
+        gridLayoutJointControl->addWidget(spinJoint1, 0, 1, 1, 1);
 
-        btnApplyJointPositions = new QPushButton(groupBoxJointControl);
-        btnApplyJointPositions->setObjectName(QString::fromUtf8("btnApplyJointPositions"));
+        spinJoint2 = new QDoubleSpinBox(groupBoxJointControl);
+        spinJoint2->setObjectName(QString::fromUtf8("spinJoint2"));
+        spinJoint2->setDecimals(3);
+        spinJoint2->setMinimum(-180.000000000000000);
+        spinJoint2->setMaximum(180.000000000000000);
 
-        gridLayoutJointControl->addWidget(btnApplyJointPositions, 6, 0, 1, 2);
+        gridLayoutJointControl->addWidget(spinJoint2, 1, 1, 1, 1);
 
 
         verticalLayout_4->addWidget(groupBoxJointControl);
@@ -231,50 +246,41 @@ public:
         groupBoxPoseControl->setObjectName(QString::fromUtf8("groupBoxPoseControl"));
         gridLayoutPoseControl = new QGridLayout(groupBoxPoseControl);
         gridLayoutPoseControl->setObjectName(QString::fromUtf8("gridLayoutPoseControl"));
-        spinRoll = new QDoubleSpinBox(groupBoxPoseControl);
-        spinRoll->setObjectName(QString::fromUtf8("spinRoll"));
+        spinZ = new QDoubleSpinBox(groupBoxPoseControl);
+        spinZ->setObjectName(QString::fromUtf8("spinZ"));
+        spinZ->setDecimals(3);
+        spinZ->setMinimum(-180.000000000000000);
+        spinZ->setMaximum(180.000000000000000);
 
-        gridLayoutPoseControl->addWidget(spinRoll, 3, 1, 1, 1);
+        gridLayoutPoseControl->addWidget(spinZ, 2, 1, 1, 1);
 
         labelRoll = new QLabel(groupBoxPoseControl);
         labelRoll->setObjectName(QString::fromUtf8("labelRoll"));
 
         gridLayoutPoseControl->addWidget(labelRoll, 3, 0, 1, 1);
 
-        spinY = new QDoubleSpinBox(groupBoxPoseControl);
-        spinY->setObjectName(QString::fromUtf8("spinY"));
-
-        gridLayoutPoseControl->addWidget(spinY, 1, 1, 1, 1);
-
-        spinX = new QDoubleSpinBox(groupBoxPoseControl);
-        spinX->setObjectName(QString::fromUtf8("spinX"));
-
-        gridLayoutPoseControl->addWidget(spinX, 0, 1, 1, 1);
-
         btnMoveToPose = new QPushButton(groupBoxPoseControl);
         btnMoveToPose->setObjectName(QString::fromUtf8("btnMoveToPose"));
 
         gridLayoutPoseControl->addWidget(btnMoveToPose, 6, 0, 1, 2);
 
-        spinZ = new QDoubleSpinBox(groupBoxPoseControl);
-        spinZ->setObjectName(QString::fromUtf8("spinZ"));
+        labelPitch = new QLabel(groupBoxPoseControl);
+        labelPitch->setObjectName(QString::fromUtf8("labelPitch"));
 
-        gridLayoutPoseControl->addWidget(spinZ, 2, 1, 1, 1);
-
-        labelZ = new QLabel(groupBoxPoseControl);
-        labelZ->setObjectName(QString::fromUtf8("labelZ"));
-
-        gridLayoutPoseControl->addWidget(labelZ, 2, 0, 1, 1);
+        gridLayoutPoseControl->addWidget(labelPitch, 4, 0, 1, 1);
 
         labelYaw = new QLabel(groupBoxPoseControl);
         labelYaw->setObjectName(QString::fromUtf8("labelYaw"));
 
         gridLayoutPoseControl->addWidget(labelYaw, 5, 0, 1, 1);
 
-        spinYaw = new QDoubleSpinBox(groupBoxPoseControl);
-        spinYaw->setObjectName(QString::fromUtf8("spinYaw"));
+        spinPitch = new QDoubleSpinBox(groupBoxPoseControl);
+        spinPitch->setObjectName(QString::fromUtf8("spinPitch"));
+        spinPitch->setDecimals(3);
+        spinPitch->setMinimum(-180.000000000000000);
+        spinPitch->setMaximum(180.000000000000000);
 
-        gridLayoutPoseControl->addWidget(spinYaw, 5, 1, 1, 1);
+        gridLayoutPoseControl->addWidget(spinPitch, 4, 1, 1, 1);
 
         labelX = new QLabel(groupBoxPoseControl);
         labelX->setObjectName(QString::fromUtf8("labelX"));
@@ -286,15 +292,42 @@ public:
 
         gridLayoutPoseControl->addWidget(labelY, 1, 0, 1, 1);
 
-        labelPitch = new QLabel(groupBoxPoseControl);
-        labelPitch->setObjectName(QString::fromUtf8("labelPitch"));
+        spinRoll = new QDoubleSpinBox(groupBoxPoseControl);
+        spinRoll->setObjectName(QString::fromUtf8("spinRoll"));
+        spinRoll->setDecimals(3);
+        spinRoll->setMinimum(-180.000000000000000);
+        spinRoll->setMaximum(180.000000000000000);
 
-        gridLayoutPoseControl->addWidget(labelPitch, 4, 0, 1, 1);
+        gridLayoutPoseControl->addWidget(spinRoll, 3, 1, 1, 1);
 
-        spinPitch = new QDoubleSpinBox(groupBoxPoseControl);
-        spinPitch->setObjectName(QString::fromUtf8("spinPitch"));
+        spinX = new QDoubleSpinBox(groupBoxPoseControl);
+        spinX->setObjectName(QString::fromUtf8("spinX"));
+        spinX->setDecimals(3);
+        spinX->setMinimum(-180.000000000000000);
+        spinX->setMaximum(180.000000000000000);
 
-        gridLayoutPoseControl->addWidget(spinPitch, 4, 1, 1, 1);
+        gridLayoutPoseControl->addWidget(spinX, 0, 1, 1, 1);
+
+        labelZ = new QLabel(groupBoxPoseControl);
+        labelZ->setObjectName(QString::fromUtf8("labelZ"));
+
+        gridLayoutPoseControl->addWidget(labelZ, 2, 0, 1, 1);
+
+        spinYaw = new QDoubleSpinBox(groupBoxPoseControl);
+        spinYaw->setObjectName(QString::fromUtf8("spinYaw"));
+        spinYaw->setDecimals(3);
+        spinYaw->setMinimum(-180.000000000000000);
+        spinYaw->setMaximum(180.000000000000000);
+
+        gridLayoutPoseControl->addWidget(spinYaw, 5, 1, 1, 1);
+
+        spinY = new QDoubleSpinBox(groupBoxPoseControl);
+        spinY->setObjectName(QString::fromUtf8("spinY"));
+        spinY->setDecimals(3);
+        spinY->setMinimum(-180.000000000000000);
+        spinY->setMaximum(180.000000000000000);
+
+        gridLayoutPoseControl->addWidget(spinY, 1, 1, 1, 1);
 
 
         verticalLayout_4->addWidget(groupBoxPoseControl);
@@ -303,75 +336,75 @@ public:
         groupBoxJogControls->setObjectName(QString::fromUtf8("groupBoxJogControls"));
         gridLayoutJog = new QGridLayout(groupBoxJogControls);
         gridLayoutJog->setObjectName(QString::fromUtf8("gridLayoutJog"));
-        btnJogYPlus = new QPushButton(groupBoxJogControls);
-        btnJogYPlus->setObjectName(QString::fromUtf8("btnJogYPlus"));
-
-        gridLayoutJog->addWidget(btnJogYPlus, 1, 0, 1, 1);
-
-        btnJogZPlus = new QPushButton(groupBoxJogControls);
-        btnJogZPlus->setObjectName(QString::fromUtf8("btnJogZPlus"));
-
-        gridLayoutJog->addWidget(btnJogZPlus, 2, 0, 1, 1);
-
-        btnJogPPlus = new QPushButton(groupBoxJogControls);
-        btnJogPPlus->setObjectName(QString::fromUtf8("btnJogPPlus"));
-
-        gridLayoutJog->addWidget(btnJogPPlus, 4, 0, 1, 1);
-
-        btnJogXMinus = new QPushButton(groupBoxJogControls);
-        btnJogXMinus->setObjectName(QString::fromUtf8("btnJogXMinus"));
-
-        gridLayoutJog->addWidget(btnJogXMinus, 0, 1, 1, 1);
-
-        btnJogZMinus = new QPushButton(groupBoxJogControls);
-        btnJogZMinus->setObjectName(QString::fromUtf8("btnJogZMinus"));
-
-        gridLayoutJog->addWidget(btnJogZMinus, 2, 1, 1, 1);
-
-        btnServoOff = new QPushButton(groupBoxJogControls);
-        btnServoOff->setObjectName(QString::fromUtf8("btnServoOff"));
-
-        gridLayoutJog->addWidget(btnServoOff, 6, 1, 1, 1);
-
-        btnJogPMinus = new QPushButton(groupBoxJogControls);
-        btnJogPMinus->setObjectName(QString::fromUtf8("btnJogPMinus"));
-
-        gridLayoutJog->addWidget(btnJogPMinus, 4, 1, 1, 1);
-
-        btnJogRMinus = new QPushButton(groupBoxJogControls);
-        btnJogRMinus->setObjectName(QString::fromUtf8("btnJogRMinus"));
-
-        gridLayoutJog->addWidget(btnJogRMinus, 3, 1, 1, 1);
-
         btnJogXPlus = new QPushButton(groupBoxJogControls);
         btnJogXPlus->setObjectName(QString::fromUtf8("btnJogXPlus"));
 
         gridLayoutJog->addWidget(btnJogXPlus, 0, 0, 1, 1);
-
-        btnJogYawPlus = new QPushButton(groupBoxJogControls);
-        btnJogYawPlus->setObjectName(QString::fromUtf8("btnJogYawPlus"));
-
-        gridLayoutJog->addWidget(btnJogYawPlus, 5, 0, 1, 1);
 
         btnJogRPlus = new QPushButton(groupBoxJogControls);
         btnJogRPlus->setObjectName(QString::fromUtf8("btnJogRPlus"));
 
         gridLayoutJog->addWidget(btnJogRPlus, 3, 0, 1, 1);
 
-        btnServoOn = new QPushButton(groupBoxJogControls);
-        btnServoOn->setObjectName(QString::fromUtf8("btnServoOn"));
+        btnJogPMinus = new QPushButton(groupBoxJogControls);
+        btnJogPMinus->setObjectName(QString::fromUtf8("btnJogPMinus"));
 
-        gridLayoutJog->addWidget(btnServoOn, 6, 0, 1, 1);
+        gridLayoutJog->addWidget(btnJogPMinus, 4, 1, 1, 1);
+
+        btnJogYawMinus = new QPushButton(groupBoxJogControls);
+        btnJogYawMinus->setObjectName(QString::fromUtf8("btnJogYawMinus"));
+
+        gridLayoutJog->addWidget(btnJogYawMinus, 5, 1, 1, 1);
+
+        btnServoOff = new QPushButton(groupBoxJogControls);
+        btnServoOff->setObjectName(QString::fromUtf8("btnServoOff"));
+
+        gridLayoutJog->addWidget(btnServoOff, 6, 1, 1, 1);
+
+        btnJogZMinus = new QPushButton(groupBoxJogControls);
+        btnJogZMinus->setObjectName(QString::fromUtf8("btnJogZMinus"));
+
+        gridLayoutJog->addWidget(btnJogZMinus, 2, 1, 1, 1);
+
+        btnJogXMinus = new QPushButton(groupBoxJogControls);
+        btnJogXMinus->setObjectName(QString::fromUtf8("btnJogXMinus"));
+
+        gridLayoutJog->addWidget(btnJogXMinus, 0, 1, 1, 1);
+
+        btnJogYawPlus = new QPushButton(groupBoxJogControls);
+        btnJogYawPlus->setObjectName(QString::fromUtf8("btnJogYawPlus"));
+
+        gridLayoutJog->addWidget(btnJogYawPlus, 5, 0, 1, 1);
+
+        btnJogPPlus = new QPushButton(groupBoxJogControls);
+        btnJogPPlus->setObjectName(QString::fromUtf8("btnJogPPlus"));
+
+        gridLayoutJog->addWidget(btnJogPPlus, 4, 0, 1, 1);
 
         btnJogYMinus = new QPushButton(groupBoxJogControls);
         btnJogYMinus->setObjectName(QString::fromUtf8("btnJogYMinus"));
 
         gridLayoutJog->addWidget(btnJogYMinus, 1, 1, 1, 1);
 
-        btnJogYawMinus = new QPushButton(groupBoxJogControls);
-        btnJogYawMinus->setObjectName(QString::fromUtf8("btnJogYawMinus"));
+        btnJogZPlus = new QPushButton(groupBoxJogControls);
+        btnJogZPlus->setObjectName(QString::fromUtf8("btnJogZPlus"));
 
-        gridLayoutJog->addWidget(btnJogYawMinus, 5, 1, 1, 1);
+        gridLayoutJog->addWidget(btnJogZPlus, 2, 0, 1, 1);
+
+        btnJogRMinus = new QPushButton(groupBoxJogControls);
+        btnJogRMinus->setObjectName(QString::fromUtf8("btnJogRMinus"));
+
+        gridLayoutJog->addWidget(btnJogRMinus, 3, 1, 1, 1);
+
+        btnJogYPlus = new QPushButton(groupBoxJogControls);
+        btnJogYPlus->setObjectName(QString::fromUtf8("btnJogYPlus"));
+
+        gridLayoutJog->addWidget(btnJogYPlus, 1, 0, 1, 1);
+
+        btnServoOn = new QPushButton(groupBoxJogControls);
+        btnServoOn->setObjectName(QString::fromUtf8("btnServoOn"));
+
+        gridLayoutJog->addWidget(btnServoOn, 6, 0, 1, 1);
 
 
         verticalLayout_4->addWidget(groupBoxJogControls);
@@ -615,10 +648,10 @@ public:
 
         verticalLayout_3->addWidget(btnStartProgram);
 
-        btnSopProgram = new QPushButton(tab_targets);
-        btnSopProgram->setObjectName(QString::fromUtf8("btnSopProgram"));
+        btnStopProgram = new QPushButton(tab_targets);
+        btnStopProgram->setObjectName(QString::fromUtf8("btnStopProgram"));
 
-        verticalLayout_3->addWidget(btnSopProgram);
+        verticalLayout_3->addWidget(btnStopProgram);
 
         textTargetValues = new QTextEdit(tab_targets);
         textTargetValues->setObjectName(QString::fromUtf8("textTargetValues"));
@@ -651,36 +684,36 @@ public:
     {
         MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "Parol6 Robotic Arm Control", nullptr));
         groupBoxJointControl->setTitle(QCoreApplication::translate("MainWindow", "Joint Control", nullptr));
-        labelJoint5->setText(QCoreApplication::translate("MainWindow", "Joint 5:", nullptr));
-        labelJoint4->setText(QCoreApplication::translate("MainWindow", "Joint 4:", nullptr));
-        labelJoint6->setText(QCoreApplication::translate("MainWindow", "Joint 6:", nullptr));
-        labelJoint1->setText(QCoreApplication::translate("MainWindow", "Joint 1:", nullptr));
         labelJoint3->setText(QCoreApplication::translate("MainWindow", "Joint 3:", nullptr));
-        labelJoint2->setText(QCoreApplication::translate("MainWindow", "Joint 2:", nullptr));
         btnApplyJointPositions->setText(QCoreApplication::translate("MainWindow", "Apply Joint Positions", nullptr));
+        labelJoint4->setText(QCoreApplication::translate("MainWindow", "Joint 4:", nullptr));
+        labelJoint2->setText(QCoreApplication::translate("MainWindow", "Joint 2:", nullptr));
+        labelJoint5->setText(QCoreApplication::translate("MainWindow", "Joint 5:", nullptr));
+        labelJoint1->setText(QCoreApplication::translate("MainWindow", "Joint 1:", nullptr));
+        labelJoint6->setText(QCoreApplication::translate("MainWindow", "Joint 6:", nullptr));
         groupBoxPoseControl->setTitle(QCoreApplication::translate("MainWindow", "Cartesian Pose Control", nullptr));
         labelRoll->setText(QCoreApplication::translate("MainWindow", "Roll:", nullptr));
         btnMoveToPose->setText(QCoreApplication::translate("MainWindow", "Move End-Effector", nullptr));
-        labelZ->setText(QCoreApplication::translate("MainWindow", "Z:", nullptr));
+        labelPitch->setText(QCoreApplication::translate("MainWindow", "Pitch:", nullptr));
         labelYaw->setText(QCoreApplication::translate("MainWindow", "Yaw:", nullptr));
         labelX->setText(QCoreApplication::translate("MainWindow", "X:", nullptr));
         labelY->setText(QCoreApplication::translate("MainWindow", "Y:", nullptr));
-        labelPitch->setText(QCoreApplication::translate("MainWindow", "Pitch:", nullptr));
+        labelZ->setText(QCoreApplication::translate("MainWindow", "Z:", nullptr));
         groupBoxJogControls->setTitle(QCoreApplication::translate("MainWindow", "Jog Controls", nullptr));
-        btnJogYPlus->setText(QCoreApplication::translate("MainWindow", "Y+", nullptr));
-        btnJogZPlus->setText(QCoreApplication::translate("MainWindow", "Z+", nullptr));
-        btnJogPPlus->setText(QCoreApplication::translate("MainWindow", "Pitch+", nullptr));
-        btnJogXMinus->setText(QCoreApplication::translate("MainWindow", "X-", nullptr));
-        btnJogZMinus->setText(QCoreApplication::translate("MainWindow", "Z-", nullptr));
-        btnServoOff->setText(QCoreApplication::translate("MainWindow", "Servo Off", nullptr));
-        btnJogPMinus->setText(QCoreApplication::translate("MainWindow", "Pitch-", nullptr));
-        btnJogRMinus->setText(QCoreApplication::translate("MainWindow", "Roll-", nullptr));
         btnJogXPlus->setText(QCoreApplication::translate("MainWindow", "X+", nullptr));
-        btnJogYawPlus->setText(QCoreApplication::translate("MainWindow", "Yaw+", nullptr));
         btnJogRPlus->setText(QCoreApplication::translate("MainWindow", "Roll+", nullptr));
-        btnServoOn->setText(QCoreApplication::translate("MainWindow", "Servo On", nullptr));
-        btnJogYMinus->setText(QCoreApplication::translate("MainWindow", "Y-", nullptr));
+        btnJogPMinus->setText(QCoreApplication::translate("MainWindow", "Pitch-", nullptr));
         btnJogYawMinus->setText(QCoreApplication::translate("MainWindow", "Yaw-", nullptr));
+        btnServoOff->setText(QCoreApplication::translate("MainWindow", "Servo Off", nullptr));
+        btnJogZMinus->setText(QCoreApplication::translate("MainWindow", "Z-", nullptr));
+        btnJogXMinus->setText(QCoreApplication::translate("MainWindow", "X-", nullptr));
+        btnJogYawPlus->setText(QCoreApplication::translate("MainWindow", "Yaw+", nullptr));
+        btnJogPPlus->setText(QCoreApplication::translate("MainWindow", "Pitch+", nullptr));
+        btnJogYMinus->setText(QCoreApplication::translate("MainWindow", "Y-", nullptr));
+        btnJogZPlus->setText(QCoreApplication::translate("MainWindow", "Z+", nullptr));
+        btnJogRMinus->setText(QCoreApplication::translate("MainWindow", "Roll-", nullptr));
+        btnJogYPlus->setText(QCoreApplication::translate("MainWindow", "Y+", nullptr));
+        btnServoOn->setText(QCoreApplication::translate("MainWindow", "Servo On", nullptr));
         labelSpeed->setText(QCoreApplication::translate("MainWindow", "Speed (0.5x - 2x):", nullptr));
         labelCurrentSpeed->setText(QCoreApplication::translate("MainWindow", "1.0x", nullptr));
         labelBoxCount->setText(QCoreApplication::translate("MainWindow", "Boxes: 0", nullptr));
@@ -718,7 +751,7 @@ public:
         labelJoint1Value_3->setText(QCoreApplication::translate("MainWindow", "X:", nullptr));
         valueJoint2_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
         btnStartProgram->setText(QCoreApplication::translate("MainWindow", "Start Program", nullptr));
-        btnSopProgram->setText(QCoreApplication::translate("MainWindow", "Stop Progarm", nullptr));
+        btnStopProgram->setText(QCoreApplication::translate("MainWindow", "Stop Progarm", nullptr));
         tabWidget->setTabText(tabWidget->indexOf(tab_targets), QCoreApplication::translate("MainWindow", "Targets", nullptr));
     } // retranslateUi
 

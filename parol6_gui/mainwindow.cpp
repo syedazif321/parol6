@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+
 #include <QMessageBox>
 #include <QTimer>
 #include <QFile>
@@ -9,11 +10,12 @@
 #include <QDir>
 #include <QDebug>
 #include <cmath>
+#include <algorithm>
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include <rclcpp/rclcpp.hpp>
+#include <trajectory_msgs/msg/joint_trajectory_point.hpp>
 
-// Guard TF2 includes so build never breaks if headers aren't found
 #if __has_include(<tf2_ros/transform_listener.h>)
   #define HAVE_TF2 1
   #include <tf2_ros/transform_listener.h>
@@ -28,6 +30,46 @@
 static inline double deg2rad(double d){ return d * M_PI / 180.0; }
 static inline double rad2deg(double r){ return r * 180.0 / M_PI; }
 
+namespace {
+static QString normalizedName(const QString& raw) {
+    QString s = raw;
+    s.replace(QChar(0x00A0), QChar(' ')); 
+    s.replace(QChar(0x2007), QChar(' ')); 
+    s.replace(QChar(0x202F), QChar(' ')); 
+    return s.trimmed();
+}
+} 
+void MainWindow::rpyToQuat(double r, double p, double y, double &qx, double &qy, double &qz, double &qw){
+
+    double cy = std::cos(y * 0.5);
+    double sy = std::sin(y * 0.5);
+    double cp = std::cos(p * 0.5);
+    double sp = std::sin(p * 0.5);
+    double cr = std::cos(r * 0.5);
+    double sr = std::sin(r * 0.5);
+    qw = cr*cp*cy + sr*sp*sy;
+    qx = sr*cp*cy - cr*sp*sy;
+    qy = cr*sp*cy + sr*cp*sy;
+    qz = cr*cp*sy - sr*sp*cy;
+}
+
+void MainWindow::quatToRpy(double qx, double qy, double qz, double qw, double &r, double &p, double &y){
+
+    double sinr_cosp = 2.0 * (qw*qx + qy*qz);
+    double cosr_cosp = 1.0 - 2.0 * (qx*qx + qy*qy);
+    r = std::atan2(sinr_cosp, cosr_cosp);
+
+    double sinp = 2.0 * (qw*qy - qz*qx);
+    if (std::abs(sinp) >= 1.0)
+        p = std::copysign(M_PI/2.0, sinp);
+    else
+        p = std::asin(sinp);
+    double siny_cosp = 2.0 * (qw*qz + qx*qy);
+    double cosy_cosp = 1.0 - 2.0 * (qy*qy + qz*qz);
+    y = std::atan2(siny_cosp, cosy_cosp);
+}
+
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
       ui(new Ui::MainWindow),
@@ -36,38 +78,37 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    ui->spinRoll->setRange(-M_PI, M_PI);
+    ui->spinPitch->setRange(-M_PI, M_PI);
+    ui->spinYaw->setRange(-M_PI, M_PI);
+    ui->spinRoll->setDecimals(3);
+    ui->spinPitch->setDecimals(3);
+    ui->spinYaw->setDecimals(3);
+
+    ui->spinX->setRange(-10.0, 10.0);
+    ui->spinY->setRange(-10.0, 10.0);
+    ui->spinZ->setRange(-10.0, 10.0);
+    ui->spinX->setDecimals(3);
+    ui->spinY->setDecimals(3);
+    ui->spinZ->setDecimals(3);
+
     QString basePath = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/../../..");
     kTargetFilePath = basePath + "/parol6/robot_data/Targets.json";
 
-    loadTargetsFromJson();
-
-    // Existing connections
-    connect(ui->btnShowJointValues, &QPushButton::clicked, this, &MainWindow::on_btnShowJointValues_clicked);
-    connect(ui->btnShowPoseValues,  &QPushButton::clicked, this, &MainWindow::on_btnShowPoseValues_clicked);
-    connect(ui->btnSaveTarget,      &QPushButton::clicked, this, &MainWindow::on_btnSaveTarget_clicked);
-    connect(ui->btnGoToTarget,      &QPushButton::clicked, this, &MainWindow::on_btnGoToTarget_clicked);
-    connect(ui->btnServoOn,         &QPushButton::clicked, this, &MainWindow::on_btnServoOn_clicked);
-    connect(ui->btnServoOff,        &QPushButton::clicked, this, &MainWindow::on_btnServoOff_clicked);
-    connect(ui->sliderSpeed,        &QSlider::valueChanged, this, &MainWindow::on_sliderSpeed_valueChanged);
-
-    // Program control buttons
-    connect(ui->btnStartProgram, &QPushButton::clicked, this, &MainWindow::on_btnStartProgram_clicked);
-    connect(ui->btnSopProgram,   &QPushButton::clicked, this, &MainWindow::on_btnSopProgram_clicked);
-
-    // Joint & pose apply buttons
-    connect(ui->btnApplyJointPositions, &QPushButton::clicked, this, &MainWindow::on_btnApplyJointPositions_clicked);
-    connect(ui->btnMoveToPose,          &QPushButton::clicked, this, &MainWindow::on_btnMoveToPose_clicked);
-
-    // Jog buttons
-    auto jogButtons = {
-        ui->btnJogXPlus, ui->btnJogXMinus, ui->btnJogYPlus, ui->btnJogYMinus,
-        ui->btnJogZPlus, ui->btnJogZMinus, ui->btnJogRPlus, ui->btnJogRMinus,
-        ui->btnJogPPlus, ui->btnJogPMinus, ui->btnJogYawPlus, ui->btnJogYawMinus
-    };
-    for (QPushButton *btn : jogButtons) {
-        connect(btn, &QPushButton::pressed, this, &MainWindow::onJogButtonPressed);
-        connect(btn, &QPushButton::released, this, &MainWindow::onJogButtonReleased);
+    {
+        auto jogButtons = {
+            ui->btnJogXPlus, ui->btnJogXMinus, ui->btnJogYPlus, ui->btnJogYMinus,
+            ui->btnJogZPlus, ui->btnJogZMinus, ui->btnJogRPlus, ui->btnJogRMinus,
+            ui->btnJogPPlus, ui->btnJogPMinus, ui->btnJogYawPlus, ui->btnJogYawMinus
+        };
+        for (QPushButton *btn : jogButtons) {
+            connect(btn, &QPushButton::pressed, this, &MainWindow::onJogButtonPressed, Qt::UniqueConnection);
+            connect(btn, &QPushButton::released, this, &MainWindow::onJogButtonReleased, Qt::UniqueConnection);
+        }
     }
+
+    connect(ui->comboBoxTargets, &QComboBox::currentTextChanged, this,
+            [this](const QString& t){ ui->lineEditTargetName->setText(t); });
 
     // Initialize ROS 2
     if (!rclcpp::ok()) rclcpp::init(0, nullptr);
@@ -96,10 +137,13 @@ MainWindow::MainWindow(QWidget *parent)
     tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_);
 #endif
 
-    // Spin timer
     QTimer *rosTimer = new QTimer(this);
     connect(rosTimer, &QTimer::timeout, this, [this]() { rclcpp::spin_some(ros_node_); });
     rosTimer->start(50);
+
+    loadTargetsFromJson();
+
+    on_sliderSpeed_valueChanged(ui->sliderSpeed->value());
 }
 
 MainWindow::~MainWindow() {
@@ -109,13 +153,19 @@ MainWindow::~MainWindow() {
 
 void MainWindow::on_btnServoOn_clicked() {
     auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
-    if (!servo_on_client_->wait_for_service(std::chrono::seconds(1))) return;
+    if (!servo_on_client_->wait_for_service(std::chrono::seconds(1))) {
+        QMessageBox::warning(this,"Service","/start_servo not available");
+        return;
+    }
     servo_on_client_->async_send_request(request);
 }
 
 void MainWindow::on_btnServoOff_clicked() {
     auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
-    if (!servo_off_client_->wait_for_service(std::chrono::seconds(1))) return;
+    if (!servo_off_client_->wait_for_service(std::chrono::seconds(1))) {
+        QMessageBox::warning(this,"Service","/stop_servo not available");
+        return;
+    }
     servo_off_client_->async_send_request(request);
 }
 
@@ -129,7 +179,7 @@ void MainWindow::on_btnStartProgram_clicked(){
     start_pipeline_client_->async_send_request(req);
 }
 
-void MainWindow::on_btnSopProgram_clicked(){
+void MainWindow::on_btnStopProgram_clicked(){
     auto req = std::make_shared<std_srvs::srv::Trigger::Request>();
     if (!stop_pipeline_client_->wait_for_service(std::chrono::seconds(2))) {
         QMessageBox::warning(this,"Service","/stop_pipeline not available");
@@ -138,7 +188,6 @@ void MainWindow::on_btnSopProgram_clicked(){
     stop_pipeline_client_->async_send_request(req);
 }
 
-// Jog
 void MainWindow::onJogButtonPressed() {
     QPushButton *btn = qobject_cast<QPushButton *>(sender());
     if (!btn) return;
@@ -174,14 +223,12 @@ void MainWindow::sendJogCommand(double x,double y,double z,double rx,double ry,d
     jog_publisher_->publish(msg);
 }
 
-// Joint states
 void MainWindow::jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg){
     if (msg->position.size()>=6){
         for(size_t i=0;i<6;i++) current_joint_values[i]=msg->position[i];
     }
 }
 
-// Labels
 void MainWindow::updateJointLabels(){
     for(int i=0;i<6;i++){
         if (auto *lbl = findChild<QLabel*>("valueJoint" + QString::number(i+1))) {
@@ -190,17 +237,16 @@ void MainWindow::updateJointLabels(){
     }
 }
 
-// NOTE: pose-value labels are valueJoint1_3..valueJoint6_3 for X,Y,Z,R,P,Y
 void MainWindow::updatePoseLabels(){
     auto setLbl = [&](const char* name, double val){
         if (auto *lbl = findChild<QLabel*>(name)) lbl->setText(QString::number(val,'f',3));
     };
-    setLbl("valueJoint1_3", current_pose_values[0]);                 // X (m)
-    setLbl("valueJoint2_3", current_pose_values[1]);                 // Y (m)
-    setLbl("valueJoint3_3", current_pose_values[2]);                 // Z (m)
-    setLbl("valueJoint4_3", rad2deg(current_pose_values[3]));        // Roll (deg)
-    setLbl("valueJoint5_3", rad2deg(current_pose_values[4]));        // Pitch (deg)
-    setLbl("valueJoint6_3", rad2deg(current_pose_values[5]));        // Yaw (deg)
+    setLbl("valueJoint1_3", current_pose_values[0]); // X (m)
+    setLbl("valueJoint2_3", current_pose_values[1]); // Y (m)
+    setLbl("valueJoint3_3", current_pose_values[2]); // Z (m)
+    setLbl("valueJoint4_3", current_pose_values[3]); // Roll RAD
+    setLbl("valueJoint5_3", current_pose_values[4]); // Pitch RAD
+    setLbl("valueJoint6_3", current_pose_values[5]); // Yaw RAD
 }
 
 bool MainWindow::fetchCurrentPoseRPY(PoseRPY &out){
@@ -214,9 +260,7 @@ bool MainWindow::fetchCurrentPoseRPY(PoseRPY &out){
         tf2::Quaternion q;
         tf2::fromMsg(tf.transform.rotation, q);
         tf2::Matrix3x3 m(q);
-        double r,p,y;
-        m.getRPY(r,p,y);
-        out.roll = r; out.pitch = p; out.yaw = y;
+        m.getRPY(out.roll, out.pitch, out.yaw);
         return true;
     } catch(const std::exception &ex){
         RCLCPP_WARN(ros_node_->get_logger(), "TF lookup failed: %s", ex.what());
@@ -224,144 +268,11 @@ bool MainWindow::fetchCurrentPoseRPY(PoseRPY &out){
     }
 #else
     (void)out;
-    RCLCPP_WARN_ONCE(ros_node_->get_logger(), "TF2 headers not found at build time; pose will use spin boxes / saved values.");
+    RCLCPP_WARN_ONCE(ros_node_->get_logger(), "TF2 headers not found; pose uses spin boxes/saved values.");
     return false;
 #endif
 }
 
-// ---------- Targets (load/save) ----------
-void MainWindow::loadTargetsFromJson(){
-    saved_joint_targets.clear();
-    saved_pose_targets.clear();
-
-    QFile file(kTargetFilePath);
-    if(!file.open(QIODevice::ReadOnly)) return;
-    QByteArray data = file.readAll();
-    file.close();
-
-    QJsonDocument doc = QJsonDocument::fromJson(data);
-    QJsonObject root = doc.object();
-
-    // Backward-compat: flat format { "Target":[J1..J6], ... }
-    for(const QString &k : root.keys()){
-        if (root[k].isArray()){
-            QJsonArray arr = root[k].toArray();
-            std::vector<double> joints;
-            joints.reserve(arr.size());
-            for(const auto &v: arr) joints.push_back(v.toDouble());
-            saved_joint_targets[k] = joints;
-            if (ui->comboBoxTargets->findText(k) < 0) ui->comboBoxTargets->addItem(k);
-        }
-    }
-    // New structured
-    if (root.contains("joints") && root["joints"].isObject()){
-        auto jmap = root["joints"].toObject();
-        for (auto it = jmap.begin(); it != jmap.end(); ++it){
-            QJsonArray arr = it.value().toArray();
-            std::vector<double> joints;
-            joints.reserve(arr.size());
-            for(const auto &v: arr) joints.push_back(v.toDouble());
-            saved_joint_targets[it.key()] = joints;
-            if (ui->comboBoxTargets->findText(it.key()) < 0)
-                ui->comboBoxTargets->addItem(it.key());
-        }
-    }
-    if (root.contains("poses") && root["poses"].isObject()){
-        auto pmap = root["poses"].toObject();
-        for (auto it = pmap.begin(); it != pmap.end(); ++it){
-            auto pobj = it.value().toObject();
-            auto posA = pobj["position"].toArray();
-            auto ornA = pobj["orientation"].toArray(); // roll,pitch,yaw (deg)
-            PoseRPY p{};
-            p.x = posA.size()>0 ? posA[0].toDouble() : 0.0;
-            p.y = posA.size()>1 ? posA[1].toDouble() : 0.0;
-            p.z = posA.size()>2 ? posA[2].toDouble() : 0.0;
-            p.roll  = deg2rad(ornA.size()>0 ? ornA[0].toDouble() : 0.0);
-            p.pitch = deg2rad(ornA.size()>1 ? ornA[1].toDouble() : 0.0);
-            p.yaw   = deg2rad(ornA.size()>2 ? ornA[2].toDouble() : 0.0);
-            saved_pose_targets[it.key()] = p;
-            if (ui->comboBoxTargets->findText(it.key()) < 0)
-                ui->comboBoxTargets->addItem(it.key());
-        }
-    }
-}
-
-void MainWindow::saveTargetsToJson(){
-    QJsonObject root;
-
-    // joints
-    QJsonObject jointsObj;
-    for(const auto &pair: saved_joint_targets){
-        QJsonArray arr;
-        for(double val: pair.second) arr.append(val);
-        jointsObj.insert(pair.first, arr);
-    }
-    root.insert("joints", jointsObj);
-
-    // poses (store orientation in degrees)
-    QJsonObject posesObj;
-    for (const auto &pair : saved_pose_targets){
-        const PoseRPY &p = pair.second;
-        QJsonArray posA; posA.append(p.x); posA.append(p.y); posA.append(p.z);
-        QJsonArray ornA; ornA.append(rad2deg(p.roll)); ornA.append(rad2deg(p.pitch)); ornA.append(rad2deg(p.yaw));
-        QJsonObject pobj; pobj.insert("position", posA); pobj.insert("orientation", ornA);
-        posesObj.insert(pair.first, pobj);
-    }
-    root.insert("poses", posesObj);
-
-    QJsonDocument doc(root);
-    QFile file(kTargetFilePath);
-    QDir().mkpath(QFileInfo(file).absolutePath());
-    if(file.open(QIODevice::WriteOnly)){
-        file.write(doc.toJson(QJsonDocument::Indented));
-        file.close();
-    }
-}
-
-// Save Target (Joint + Pose)
-void MainWindow::on_btnSaveTarget_clicked(){
-    QString name = ui->lineEditTargetName->text();
-    if(name.isEmpty()) return;
-
-    // Save joints
-    saved_joint_targets[name] = current_joint_values;
-
-    // Save pose (prefer TF; fallback to spin boxes)
-    PoseRPY p{};
-    if (!fetchCurrentPoseRPY(p)){
-        p.x = ui->spinX->value();
-        p.y = ui->spinY->value();
-        p.z = ui->spinZ->value();
-        p.roll  = deg2rad(ui->spinRoll->value());
-        p.pitch = deg2rad(ui->spinPitch->value());
-        p.yaw   = deg2rad(ui->spinYaw->value());
-    }
-    saved_pose_targets[name] = p;
-
-    if (ui->comboBoxTargets->findText(name) < 0)
-        ui->comboBoxTargets->addItem(name);
-
-    ui->lineEditTargetName->clear();
-    saveTargetsToJson();
-}
-
-void MainWindow::on_btnGoToTarget_clicked(){
-    QString name = ui->comboBoxTargets->currentText();
-
-    // C++17: use find(), not contains()
-    if (saved_joint_targets.find(name) != saved_joint_targets.end()){
-        sendTrajectoryToTarget(saved_joint_targets[name]);
-        return;
-    }
-    if (saved_pose_targets.find(name) != saved_pose_targets.end()){
-        std::vector<double> joints;
-        if (computeIKToJoints(saved_pose_targets[name], joints)){
-            sendTrajectoryToTarget(joints);
-            return;
-        }
-    }
-    QMessageBox::warning(this,"Invalid Target","Selected target not found.");
-}
 
 void MainWindow::on_btnShowJointValues_clicked(){
     updateJointLabels();
@@ -370,27 +281,27 @@ void MainWindow::on_btnShowJointValues_clicked(){
 void MainWindow::on_btnShowPoseValues_clicked(){
     PoseRPY p{};
     if (fetchCurrentPoseRPY(p)){
-        current_pose_values = { p.x, p.y, p.z, p.roll, p.pitch, p.yaw };
+        current_pose_values = { p.x, p.y, p.z, p.roll, p.pitch, p.yaw }; // radians
     } else {
         current_pose_values = {
             ui->spinX->value(),
             ui->spinY->value(),
             ui->spinZ->value(),
-            deg2rad(ui->spinRoll->value()),
-            deg2rad(ui->spinPitch->value()),
-            deg2rad(ui->spinYaw->value())
+            ui->spinRoll->value(),
+            ui->spinPitch->value(),
+            ui->spinYaw->value()
         };
     }
     updatePoseLabels();
 }
 
-// Speed slider
 void MainWindow::on_sliderSpeed_valueChanged(int value){
     double speed = value/100.0;
     ui->labelCurrentSpeed->setText(QString::number(speed,'f',2)+"x");
+    ui->labelActiveSpeed->setText(QString("Speed: %1x").arg(QString::number(speed,'f',2)));
 }
 
-// ---------- Send trajectory ----------
+
 void MainWindow::sendTrajectoryToTarget(const std::vector<double>& joint_positions){
     if(!trajectory_action_client_->wait_for_action_server(std::chrono::seconds(2))){
         RCLCPP_ERROR(ros_node_->get_logger(),"Trajectory action server not available.");
@@ -418,7 +329,6 @@ void MainWindow::sendTrajectoryToTarget(const std::vector<double>& joint_positio
     }
 }
 
-// Apply joints from spin boxes
 void MainWindow::on_btnApplyJointPositions_clicked(){
     std::vector<double> target(6,0.0);
     target[0] = ui->spinJoint1->value();
@@ -430,15 +340,14 @@ void MainWindow::on_btnApplyJointPositions_clicked(){
     sendTrajectoryToTarget(target);
 }
 
-// Move EE using IK from X/Y/Z/R/P/Y spin boxes (RPY in degrees)
 void MainWindow::on_btnMoveToPose_clicked(){
     PoseRPY p{};
     p.x = ui->spinX->value();
     p.y = ui->spinY->value();
     p.z = ui->spinZ->value();
-    p.roll  = deg2rad(ui->spinRoll->value());
-    p.pitch = deg2rad(ui->spinPitch->value());
-    p.yaw   = deg2rad(ui->spinYaw->value());
+    p.roll  = ui->spinRoll->value();
+    p.pitch = ui->spinPitch->value();
+    p.yaw   = ui->spinYaw->value();
 
     std::vector<double> joints;
     if (!computeIKToJoints(p, joints)){
@@ -448,7 +357,6 @@ void MainWindow::on_btnMoveToPose_clicked(){
     sendTrajectoryToTarget(joints);
 }
 
-// ---------- IK helper ----------
 bool MainWindow::computeIKToJoints(const PoseRPY &target_pose, std::vector<double> &out_joints){
     if (!compute_ik_client_->wait_for_service(std::chrono::seconds(2))){
         RCLCPP_ERROR(ros_node_->get_logger(),"compute_ik service not available.");
@@ -467,11 +375,12 @@ bool MainWindow::computeIKToJoints(const PoseRPY &target_pose, std::vector<doubl
     q.setRPY(target_pose.roll, target_pose.pitch, target_pose.yaw);
     ps.pose.orientation = tf2::toMsg(q);
 #else
-    // minimal orientation fallback if TF2 headers absent
-    ps.pose.orientation.x = 0.0;
-    ps.pose.orientation.y = 0.0;
-    ps.pose.orientation.z = 0.0;
-    ps.pose.orientation.w = 1.0;
+    double qx,qy,qz,qw;
+    rpyToQuat(target_pose.roll, target_pose.pitch, target_pose.yaw, qx,qy,qz,qw);
+    ps.pose.orientation.x = qx;
+    ps.pose.orientation.y = qy;
+    ps.pose.orientation.z = qz;
+    ps.pose.orientation.w = qw;
 #endif
 
     moveit_msgs::msg::RobotState seed;
@@ -485,7 +394,6 @@ bool MainWindow::computeIKToJoints(const PoseRPY &target_pose, std::vector<doubl
     req->ik_request.ik_link_name = ee_link_;
     req->ik_request.pose_stamped = ps;
     req->ik_request.timeout = rclcpp::Duration::from_seconds(0.5);
-    // no attempts field on Humble
 
     auto future = compute_ik_client_->async_send_request(req);
     if (rclcpp::spin_until_future_complete(ros_node_, future) != rclcpp::FutureReturnCode::SUCCESS){
@@ -510,4 +418,295 @@ bool MainWindow::computeIKToJoints(const PoseRPY &target_pose, std::vector<doubl
     }
     out_joints = std::move(result);
     return true;
+}
+
+
+void MainWindow::addTargetNameToCombo(const QString& name){
+    if (ui->comboBoxTargets->findText(name) < 0)
+        ui->comboBoxTargets->addItem(name);
+}
+
+bool MainWindow::parseFlatArrayTarget(const QString& key, const QJsonArray& arr){
+
+    if (arr.size()==6){
+        std::vector<double> j(6,0.0);
+        for(int i=0;i<6;i++) j[i] = arr[i].toDouble();
+        saved_joint_targets[key] = j;
+        addTargetNameToCombo(key);
+        return true;
+    } else if (arr.size()==7){
+        PoseRPY p{};
+        double qx = arr[3].toDouble();
+        double qy = arr[4].toDouble();
+        double qz = arr[5].toDouble();
+        double qw = arr[6].toDouble();
+        p.x = arr[0].toDouble();
+        p.y = arr[1].toDouble();
+        p.z = arr[2].toDouble();
+        quatToRpy(qx,qy,qz,qw, p.roll,p.pitch,p.yaw);
+        saved_pose_targets[key] = p;
+        addTargetNameToCombo(key);
+        return true;
+    }
+    return false;
+}
+
+void MainWindow::loadTargetsFromJson(){
+    saved_joint_targets.clear();
+    saved_pose_targets.clear();
+
+    QFile file(kTargetFilePath);
+    if(!file.open(QIODevice::ReadOnly)) return;
+    QByteArray data = file.readAll();
+    file.close();
+
+    QJsonDocument doc = QJsonDocument::fromJson(data);
+    QJsonObject root = doc.object();
+
+    for(const QString &k : root.keys()){
+        if (k=="joints" || k=="poses") continue;
+        if (root[k].isArray()){
+            if (parseFlatArrayTarget(k, root[k].toArray())) continue;
+        }
+    }
+
+    if (root.contains("joints") && root["joints"].isObject()){
+        auto jmap = root["joints"].toObject();
+        for (auto it = jmap.begin(); it != jmap.end(); ++it){
+            QJsonArray arr = it.value().toArray();
+            if (arr.size()==6){
+                std::vector<double> joints(6,0.0);
+                for(int i=0;i<6;i++) joints[i]=arr[i].toDouble();
+                saved_joint_targets[it.key()] = joints;
+                addTargetNameToCombo(it.key());
+            }
+        }
+    }
+
+    if (root.contains("poses") && root["poses"].isObject()){
+        auto pmap = root["poses"].toObject();
+        for (auto it = pmap.begin(); it != pmap.end(); ++it){
+            auto pobj = it.value().toObject();
+            PoseRPY p{};
+            if (pobj.contains("position") && pobj["position"].isArray()){
+                auto posA = pobj["position"].toArray();
+                p.x = posA.size()>0 ? posA[0].toDouble() : 0.0;
+                p.y = posA.size()>1 ? posA[1].toDouble() : 0.0;
+                p.z = posA.size()>2 ? posA[2].toDouble() : 0.0;
+            }
+            if (pobj.contains("orientation") && pobj["orientation"].isArray()){
+                auto ornA = pobj["orientation"].toArray();
+                if (ornA.size()==4){
+                    double qx=ornA[0].toDouble(), qy=ornA[1].toDouble(), qz=ornA[2].toDouble(), qw=ornA[3].toDouble();
+                    quatToRpy(qx, qy, qz, qw, p.roll, p.pitch, p.yaw);
+                } else if (ornA.size()==3){
+
+                    p.roll  = ornA[0].toDouble();
+                    p.pitch = ornA[1].toDouble();
+                    p.yaw   = ornA[2].toDouble();
+                }
+            }
+            saved_pose_targets[it.key()] = p;
+            addTargetNameToCombo(it.key());
+        }
+    }
+}
+
+void MainWindow::saveTargetsToJson(){
+    QJsonObject root;
+    {
+        QFile f(kTargetFilePath);
+        if (f.open(QIODevice::ReadOnly)) {
+            root = QJsonDocument::fromJson(f.readAll()).object();
+            f.close();
+        }
+    }
+
+    QJsonObject jointsObj;
+    for(const auto &pair: saved_joint_targets){
+        QJsonArray arr;
+        for(double val: pair.second) arr.append(val);
+        jointsObj.insert(pair.first, arr);
+    }
+    root.insert("joints", jointsObj);
+
+    QJsonObject posesObj;
+    for (const auto &pair : saved_pose_targets){
+        const PoseRPY &p = pair.second;
+        double qx,qy,qz,qw;
+        rpyToQuat(p.roll, p.pitch, p.yaw, qx,qy,qz,qw);
+
+        QJsonArray posA; posA.append(p.x); posA.append(p.y); posA.append(p.z);
+        QJsonArray ornA; ornA.append(qx); ornA.append(qy); ornA.append(qz); ornA.append(qw);
+        QJsonObject pobj; pobj.insert("position", posA); pobj.insert("orientation", ornA);
+        posesObj.insert(pair.first, pobj);
+    }
+    root.insert("poses", posesObj);
+
+    QJsonDocument out(root);
+    QFile file(kTargetFilePath);
+    QDir().mkpath(QFileInfo(file).absolutePath());
+    if(file.open(QIODevice::WriteOnly)){
+        file.write(out.toJson(QJsonDocument::Indented));
+        file.close();
+    }
+}
+
+
+void MainWindow::on_btnSaveTarget_clicked(){
+
+    QString name = normalizedName(ui->lineEditTargetName->text());
+    if (name.isEmpty()) name = normalizedName(ui->comboBoxTargets->currentText());
+
+    if(name.isEmpty()){
+        QMessageBox::warning(this,"Name","Enter a target name or pick one from the dropdown.");
+        return;
+    }
+
+    std::vector<double> joints(6,0.0);
+    if (current_joint_values.size() >= 6){
+        joints = current_joint_values;  // radians
+    } else {
+        joints[0] = ui->spinJoint1->value();
+        joints[1] = ui->spinJoint2->value();
+        joints[2] = ui->spinJoint3->value();
+        joints[3] = ui->spinJoint4->value();
+        joints[4] = ui->spinJoint5->value();
+        joints[5] = ui->spinJoint6->value();
+    }
+
+    saved_joint_targets[name] = joints;
+    addTargetNameToCombo(name);
+
+    saveTargetsToJson();
+    showPreviewText(QString("Saved Joint Target: %1").arg(name), joints);
+
+
+    ui->lineEditTargetName->clear();
+}
+
+
+void MainWindow::on_btnSaveTarget_2_clicked(){
+
+    QString name = normalizedName(ui->lineEditTargetName->text());
+    if (name.isEmpty()) name = normalizedName(ui->comboBoxTargets->currentText());
+
+    if(name.isEmpty()){
+        QMessageBox::warning(this,"Name","Enter a target name or pick one from the dropdown.");
+        return;
+    }
+
+    PoseRPY p{};
+    if (!fetchCurrentPoseRPY(p)){
+        p.x = ui->spinX->value();
+        p.y = ui->spinY->value();
+        p.z = ui->spinZ->value();
+        p.roll  = ui->spinRoll->value();
+        p.pitch = ui->spinPitch->value();
+        p.yaw   = ui->spinYaw->value();
+    }
+
+    saved_pose_targets[name] = p;
+    addTargetNameToCombo(name);
+
+    // Persist and preview
+    saveTargetsToJson();
+    showPreviewTextPose(QString("Saved Pose Target: %1").arg(name), p);
+
+    ui->lineEditTargetName->clear();
+}
+
+
+bool MainWindow::selectTargetAndPreviewInGUI(const QString& name){
+    auto itJ = saved_joint_targets.find(name);
+    if (itJ != saved_joint_targets.end()){
+        const auto& j = itJ->second;
+        if (j.size()==6){
+
+            ui->spinJoint1->setValue(j[0]);
+            ui->spinJoint2->setValue(j[1]);
+            ui->spinJoint3->setValue(j[2]);
+            ui->spinJoint4->setValue(j[3]);
+            ui->spinJoint5->setValue(j[4]);
+            ui->spinJoint6->setValue(j[5]);
+
+            showPreviewText(QString("Selected Joint Target: %1").arg(name), j);
+            return true;
+        }
+    }
+    auto itP = saved_pose_targets.find(name);
+    if (itP != saved_pose_targets.end()){
+        const auto& p = itP->second;
+
+        ui->spinX->setValue(p.x);
+        ui->spinY->setValue(p.y);
+        ui->spinZ->setValue(p.z);
+        ui->spinRoll->setValue(p.roll);
+        ui->spinPitch->setValue(p.pitch);
+        ui->spinYaw->setValue(p.yaw);
+
+        showPreviewTextPose(QString("Selected Pose Target: %1").arg(name), p);
+        return true;
+    }
+    return false;
+}
+
+void MainWindow::on_btnGoToTarget_clicked(){
+    QString name = ui->comboBoxTargets->currentText();
+    if (name.isEmpty()){
+        QMessageBox::warning(this,"Target","Select a target.");
+        return;
+    }
+
+    if (!selectTargetAndPreviewInGUI(name)){
+        QMessageBox::warning(this,"Invalid Target","Selected target not found.");
+        return;
+    }
+
+    if (saved_joint_targets.find(name) != saved_joint_targets.end()){
+        sendTrajectoryToTarget(saved_joint_targets[name]);
+        return;
+    }
+    if (saved_pose_targets.find(name) != saved_pose_targets.end()){
+        std::vector<double> joints;
+        if (computeIKToJoints(saved_pose_targets[name], joints)){
+            sendTrajectoryToTarget(joints);
+            return;
+        } else {
+            QMessageBox::warning(this,"IK","IK failed for the pose target.");
+            return;
+        }
+    }
+    QMessageBox::warning(this,"Invalid Target","Selected target not found.");
+}
+
+void MainWindow::showPreviewText(const QString& title, const std::vector<double>& vals){
+    QString s = title + "\n[";
+    for(size_t i=0;i<vals.size();++i){
+        s += QString::number(vals[i],'f',3);
+        if (i+1<vals.size()) s += ", ";
+    }
+    s += "]";
+    ui->textTargetValues->setPlainText(s);
+}
+
+void MainWindow::showPreviewTextPose(const QString& title, const PoseRPY& p){
+    double qx,qy,qz,qw;
+    rpyToQuat(p.roll,p.pitch,p.yaw, qx,qy,qz,qw);
+    QString s = title +
+        QString("\nX: %1  Y: %2  Z: %3\nRoll: %4  Pitch: %5  Yaw: %6 (rad)\nQuat: [%7, %8, %9, %10]")
+            .arg(QString::number(p.x,'f',3))
+            .arg(QString::number(p.y,'f',3))
+            .arg(QString::number(p.z,'f',3))
+            .arg(QString::number(p.roll,'f',3))
+            .arg(QString::number(p.pitch,'f',3))
+            .arg(QString::number(p.yaw,'f',3))
+            .arg(QString::number(qx,'f',6))
+            .arg(QString::number(qy,'f',6))
+            .arg(QString::number(qz,'f',6))
+            .arg(QString::number(qw,'f',6));
+    ui->textTargetValues->setPlainText(s);
+
+    current_pose_values = { p.x,p.y,p.z,p.roll,p.pitch,p.yaw };
+    updatePoseLabels();
 }

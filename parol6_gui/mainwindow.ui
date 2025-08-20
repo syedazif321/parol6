@@ -31,56 +31,24 @@
            <string>Joint Control</string>
           </property>
           <layout class="QGridLayout" name="gridLayoutJointControl">
-           <item row="3" column="1">
-            <widget class="QDoubleSpinBox" name="spinJoint4"/>
-           </item>
-           <item row="2" column="1">
-            <widget class="QDoubleSpinBox" name="spinJoint3"/>
-           </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="labelJoint5">
+           <item row="2" column="0">
+            <widget class="QLabel" name="labelJoint3">
              <property name="text">
-              <string>Joint 5:</string>
+              <string>Joint 3:</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
-            <widget class="QDoubleSpinBox" name="spinJoint1"/>
+           <item row="6" column="0" colspan="2">
+            <widget class="QPushButton" name="btnApplyJointPositions">
+             <property name="text">
+              <string>Apply Joint Positions</string>
+             </property>
+            </widget>
            </item>
            <item row="3" column="0">
             <widget class="QLabel" name="labelJoint4">
              <property name="text">
               <string>Joint 4:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="0">
-            <widget class="QLabel" name="labelJoint6">
-             <property name="text">
-              <string>Joint 6:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="labelJoint1">
-             <property name="text">
-              <string>Joint 1:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QDoubleSpinBox" name="spinJoint2"/>
-           </item>
-           <item row="4" column="1">
-            <widget class="QDoubleSpinBox" name="spinJoint5"/>
-           </item>
-           <item row="5" column="1">
-            <widget class="QDoubleSpinBox" name="spinJoint6"/>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="labelJoint3">
-             <property name="text">
-              <string>Joint 3:</string>
              </property>
             </widget>
            </item>
@@ -91,10 +59,93 @@
              </property>
             </widget>
            </item>
-           <item row="6" column="0" colspan="2">
-            <widget class="QPushButton" name="btnApplyJointPositions">
+           <item row="3" column="1">
+            <widget class="QDoubleSpinBox" name="spinJoint4">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-180.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="labelJoint5">
              <property name="text">
-              <string>Apply Joint Positions</string>
+              <string>Joint 5:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QDoubleSpinBox" name="spinJoint5">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-180.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="labelJoint1">
+             <property name="text">
+              <string>Joint 1:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="labelJoint6">
+             <property name="text">
+              <string>Joint 6:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QDoubleSpinBox" name="spinJoint6">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-180.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QDoubleSpinBox" name="spinJoint3">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-180.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QDoubleSpinBox" name="spinJoint1">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-180.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>180.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QDoubleSpinBox" name="spinJoint2">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-180.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>180.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -107,8 +158,18 @@
            <string>Cartesian Pose Control</string>
           </property>
           <layout class="QGridLayout" name="gridLayoutPoseControl">
-           <item row="3" column="1">
-            <widget class="QDoubleSpinBox" name="spinRoll"/>
+           <item row="2" column="1">
+            <widget class="QDoubleSpinBox" name="spinZ">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-180.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>180.000000000000000</double>
+             </property>
+            </widget>
            </item>
            <item row="3" column="0">
             <widget class="QLabel" name="labelRoll">
@@ -117,12 +178,6 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="1">
-            <widget class="QDoubleSpinBox" name="spinY"/>
-           </item>
-           <item row="0" column="1">
-            <widget class="QDoubleSpinBox" name="spinX"/>
-           </item>
            <item row="6" column="0" colspan="2">
             <widget class="QPushButton" name="btnMoveToPose">
              <property name="text">
@@ -130,13 +185,10 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="1">
-            <widget class="QDoubleSpinBox" name="spinZ"/>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="labelZ">
+           <item row="4" column="0">
+            <widget class="QLabel" name="labelPitch">
              <property name="text">
-              <string>Z:</string>
+              <string>Pitch:</string>
              </property>
             </widget>
            </item>
@@ -147,8 +199,18 @@
              </property>
             </widget>
            </item>
-           <item row="5" column="1">
-            <widget class="QDoubleSpinBox" name="spinYaw"/>
+           <item row="4" column="1">
+            <widget class="QDoubleSpinBox" name="spinPitch">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-180.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>180.000000000000000</double>
+             </property>
+            </widget>
            </item>
            <item row="0" column="0">
             <widget class="QLabel" name="labelX">
@@ -164,15 +226,64 @@
              </property>
             </widget>
            </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="labelPitch">
-             <property name="text">
-              <string>Pitch:</string>
+           <item row="3" column="1">
+            <widget class="QDoubleSpinBox" name="spinRoll">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-180.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>180.000000000000000</double>
              </property>
             </widget>
            </item>
-           <item row="4" column="1">
-            <widget class="QDoubleSpinBox" name="spinPitch"/>
+           <item row="0" column="1">
+            <widget class="QDoubleSpinBox" name="spinX">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-180.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>180.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="labelZ">
+             <property name="text">
+              <string>Z:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QDoubleSpinBox" name="spinYaw">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-180.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>180.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QDoubleSpinBox" name="spinY">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-180.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>180.000000000000000</double>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -183,73 +294,10 @@
            <string>Jog Controls</string>
           </property>
           <layout class="QGridLayout" name="gridLayoutJog">
-           <item row="1" column="0">
-            <widget class="QPushButton" name="btnJogYPlus">
-             <property name="text">
-              <string>Y+</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QPushButton" name="btnJogZPlus">
-             <property name="text">
-              <string>Z+</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="0">
-            <widget class="QPushButton" name="btnJogPPlus">
-             <property name="text">
-              <string>Pitch+</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QPushButton" name="btnJogXMinus">
-             <property name="text">
-              <string>X-</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QPushButton" name="btnJogZMinus">
-             <property name="text">
-              <string>Z-</string>
-             </property>
-            </widget>
-           </item>
-           <item row="6" column="1">
-            <widget class="QPushButton" name="btnServoOff">
-             <property name="text">
-              <string>Servo Off</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="1">
-            <widget class="QPushButton" name="btnJogPMinus">
-             <property name="text">
-              <string>Pitch-</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QPushButton" name="btnJogRMinus">
-             <property name="text">
-              <string>Roll-</string>
-             </property>
-            </widget>
-           </item>
            <item row="0" column="0">
             <widget class="QPushButton" name="btnJogXPlus">
              <property name="text">
               <string>X+</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="0">
-            <widget class="QPushButton" name="btnJogYawPlus">
-             <property name="text">
-              <string>Yaw+</string>
              </property>
             </widget>
            </item>
@@ -260,10 +308,52 @@
              </property>
             </widget>
            </item>
-           <item row="6" column="0">
-            <widget class="QPushButton" name="btnServoOn">
+           <item row="4" column="1">
+            <widget class="QPushButton" name="btnJogPMinus">
              <property name="text">
-              <string>Servo On</string>
+              <string>Pitch-</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QPushButton" name="btnJogYawMinus">
+             <property name="text">
+              <string>Yaw-</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="1">
+            <widget class="QPushButton" name="btnServoOff">
+             <property name="text">
+              <string>Servo Off</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QPushButton" name="btnJogZMinus">
+             <property name="text">
+              <string>Z-</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QPushButton" name="btnJogXMinus">
+             <property name="text">
+              <string>X-</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QPushButton" name="btnJogYawPlus">
+             <property name="text">
+              <string>Yaw+</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QPushButton" name="btnJogPPlus">
+             <property name="text">
+              <string>Pitch+</string>
              </property>
             </widget>
            </item>
@@ -274,10 +364,31 @@
              </property>
             </widget>
            </item>
-           <item row="5" column="1">
-            <widget class="QPushButton" name="btnJogYawMinus">
+           <item row="2" column="0">
+            <widget class="QPushButton" name="btnJogZPlus">
              <property name="text">
-              <string>Yaw-</string>
+              <string>Z+</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QPushButton" name="btnJogRMinus">
+             <property name="text">
+              <string>Roll-</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QPushButton" name="btnJogYPlus">
+             <property name="text">
+              <string>Y+</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="0">
+            <widget class="QPushButton" name="btnServoOn">
+             <property name="text">
+              <string>Servo On</string>
              </property>
             </widget>
            </item>
@@ -504,7 +615,7 @@
          </spacer>
         </item>
         <item>
-         <widget class="QFrame" name="">
+         <widget class="QFrame" name="frame">
           <layout class="QGridLayout" name="jointValuesLayout_3">
            <item row="5" column="1">
             <widget class="QLabel" name="valueJoint6_3">
@@ -609,14 +720,14 @@
         <item>
          <widget class="QPushButton" name="btnSaveTarget_4">
           <property name="text">
-           <string>Stop Program</string>
+           <string>Start Program</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="btnSaveTarget_3">
           <property name="text">
-           <string>Start Progarm</string>
+           <string>Stop Progarm</string>
           </property>
          </widget>
         </item>
