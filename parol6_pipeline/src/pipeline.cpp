@@ -366,57 +366,72 @@ private:
     return sendJoints(joints, kJointMoveSeconds);
   }
 
-  bool moveToTargetAndWait(const std::string &target_name) {
-    if (!targets_json_loaded_)
-    {
-        RCLCPP_ERROR(this->get_logger(), "Targets.json not loaded yet!");
-        return false;
-    }
-
-    if (targets_json_.find(target_name) == targets_json_.end())
-    {
-        RCLCPP_ERROR(this->get_logger(), "Target '%s' not found in Targets.json", target_name.c_str());
-        return false;
-    }
-
-    std::vector<double> joints;
-    try
-    {
-        for (auto &val : targets_json_[target_name])
-        {
-            joints.push_back(val.get<double>());
-        }
-    }
-    catch (const std::exception &e)
-    {
-        RCLCPP_ERROR(this->get_logger(), "Failed to read joint values for '%s': %s", target_name.c_str(), e.what());
-        return false;
-    }
-
-    moveit::planning_interface::MoveGroupInterface move_group(
-        this->shared_from_this(),
-        "arm" 
-    );
-
-    move_group.setJointValueTarget(joints);
-
-    moveit::planning_interface::MoveGroupInterface::Plan plan;
-
-    if (move_group.plan(plan) != moveit::core::MoveItErrorCode::SUCCESS)
-    {
-        RCLCPP_ERROR(this->get_logger(), "Planning to target '%s' failed", target_name.c_str());
-        return false;
-    }
-
-    if (move_group.execute(plan) != moveit::core::MoveItErrorCode::SUCCESS)
-    {
-        RCLCPP_ERROR(this->get_logger(), "Execution to target '%s' failed", target_name.c_str());
-        return false;
-    }
-
-    RCLCPP_INFO(this->get_logger(), "Successfully moved to target '%s'", target_name.c_str());
-    return true;
+bool moveToTargetAndWait(const std::string &target_name) {
+  if (!targets_json_loaded_) {
+    RCLCPP_ERROR(this->get_logger(), "Targets.json not loaded yet!");
+    return false;
   }
+
+  const auto &root = targets_json_; 
+
+  const nlohmann::json* joints_json = nullptr;
+  if (root.contains("joints") && root["joints"].is_object()) {
+    const auto& jointsObj = root["joints"];
+    auto it = jointsObj.find(target_name);
+    if (it != jointsObj.end() && it->is_array()) {
+      joints_json = &(*it);
+    }
+  }
+  if (!joints_json) {
+    auto itFlat = root.find(target_name);
+    if (itFlat != root.end() && itFlat->is_array()) {
+      joints_json = &(*itFlat);
+    }
+  }
+
+  if (!joints_json) {
+    RCLCPP_ERROR(this->get_logger(),
+                 "Joint target '%s' not found (checked root['joints'] and legacy flat).",
+                 target_name.c_str());
+    return false;
+  }
+  std::vector<double> joints;
+  try {
+    if (joints_json->size() != 6) {
+      RCLCPP_ERROR(this->get_logger(),
+                   "Joint target '%s' has %zu values; expected 6.",
+                   target_name.c_str(), joints_json->size());
+      return false;
+    }
+    joints.reserve(6);
+    for (const auto& v : *joints_json) joints.push_back(v.get<double>());
+  } catch (const std::exception &e) {
+    RCLCPP_ERROR(this->get_logger(),
+                 "Failed to parse joint values for '%s': %s",
+                 target_name.c_str(), e.what());
+    return false;
+  }
+
+  moveit::planning_interface::MoveGroupInterface move_group(
+      this->shared_from_this(), "arm");
+
+  move_group.setJointValueTarget(joints);
+
+  moveit::planning_interface::MoveGroupInterface::Plan plan;
+  if (move_group.plan(plan) != moveit::core::MoveItErrorCode::SUCCESS) {
+    RCLCPP_ERROR(this->get_logger(), "Planning to joint target '%s' failed", target_name.c_str());
+    return false;
+  }
+
+  if (move_group.execute(plan) != moveit::core::MoveItErrorCode::SUCCESS) {
+    RCLCPP_ERROR(this->get_logger(), "Execution to joint target '%s' failed", target_name.c_str());
+    return false;
+  }
+
+  RCLCPP_INFO(this->get_logger(), "Successfully moved to joint target '%s'", target_name.c_str());
+  return true;
+}
+
 
   bool moveCartesianToTarget(const std::string &target_name) {
     if (!targets_json_loaded_) {
@@ -435,8 +450,6 @@ private:
       RCLCPP_ERROR(this->get_logger(), "Target '%s' must be an array of 7 values: [x, y, z, qx, qy, qz, qw]", target_name.c_str());
       return false;
     }
-
-    // Parse position and orientation
     std::vector<double> pose_vals;
     try {
       for (const auto& val : data) {
@@ -456,7 +469,6 @@ private:
     target_pose.orientation.z = pose_vals[5];
     target_pose.orientation.w = pose_vals[6];
 
-    // Create MoveGroupInterface
     moveit::planning_interface::MoveGroupInterface move_group(
         this->shared_from_this(),
         "arm"  // ← Change this if your MoveIt group is named differently

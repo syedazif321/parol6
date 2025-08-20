@@ -23,8 +23,7 @@ find_package(nlohmann_json REQUIRED)
 find_package(conveyorbelt_msgs REQUIRED)
 find_package(msg_gazebo REQUIRED)
 find_package(SQLite3 REQUIRED)
-
-
+find_package(builtin_interfaces REQUIRED)  # for builtin_interfaces::msg::Time in headers
 
 include_directories(
   include
@@ -32,7 +31,7 @@ include_directories(
   ${moveit_ros_planning_interface_INCLUDE_DIRS}
 )
 
-
+# --------- existing nodes (unchanged) ----------
 add_executable(box_detector_node src/box_detector.cpp)
 ament_target_dependencies(box_detector_node
   rclcpp
@@ -47,7 +46,6 @@ ament_target_dependencies(box_detector_node
   message_filters
   moveit_ros_planning_interface
 )
-
 target_link_libraries(box_detector_node
   ${OpenCV_LIBS}
   tf2::tf2
@@ -67,7 +65,6 @@ ament_target_dependencies(pick_controller_node
   tf2_ros
   tf2_geometry_msgs
 )
-
 target_link_libraries(pick_controller_node
   tf2::tf2
   tf2_ros::tf2_ros
@@ -81,14 +78,13 @@ ament_target_dependencies(analytics_logger_node
   std_srvs
   nlohmann_json
 )
-
 target_link_libraries(analytics_logger_node
   SQLite::SQLite3
 )
 
-
-add_executable(pipeline_node src/pipeline.cpp)
-ament_target_dependencies(pipeline_node
+# --------- NEW: FSM node (replaces old pipeline_node) ----------
+add_executable(pipeline_fsm_node src/pipeline_fsm_node.cpp)
+ament_target_dependencies(pipeline_fsm_node
   rclcpp
   std_srvs
   conveyorbelt_msgs
@@ -97,21 +93,23 @@ ament_target_dependencies(pipeline_node
   moveit_ros_planning_interface
   moveit_msgs
   nlohmann_json
+  builtin_interfaces
 )
 
+# If your custom messages export build targets, keep these guards:
 if(conveyorbelt_msgs_EXPORTED_TARGETS)
-  add_dependencies(pipeline_node ${conveyorbelt_msgs_EXPORTED_TARGETS})
+  add_dependencies(pipeline_fsm_node ${conveyorbelt_msgs_EXPORTED_TARGETS})
 endif()
-
 if(msg_gazebo_EXPORTED_TARGETS)
-  add_dependencies(pipeline_node ${msg_gazebo_EXPORTED_TARGETS})
+  add_dependencies(pipeline_fsm_node ${msg_gazebo_EXPORTED_TARGETS})
 endif()
 
+# --------- install targets ----------
 install(TARGETS
   box_detector_node
   pick_controller_node
-  pipeline_node
   analytics_logger_node
+  pipeline_fsm_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -122,7 +120,5 @@ install(DIRECTORY include/
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
 )
-
-
 
 ament_package()

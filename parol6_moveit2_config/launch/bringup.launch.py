@@ -199,7 +199,8 @@ def generate_launch_description():
     )
     pipeline_node = Node(
         package='parol6_pipeline',
-        executable='pipeline_node',
+        executable='pipeline_fsm_node',
+        name='pipeline_fsm_node',
         output='screen',
         parameters=[
             robot_description,
