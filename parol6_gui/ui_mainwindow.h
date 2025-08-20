@@ -134,8 +134,8 @@ public:
     QLabel *labelJoint1Value_3;
     QLabel *valueJoint2_3;
     QSpacerItem *horizontalSpacer_2;
-    QPushButton *btnSaveTarget_4;
-    QPushButton *btnSaveTarget_3;
+    QPushButton *btnStartProgram;
+    QPushButton *btnSopProgram;
     QTextEdit *textTargetValues;
     QMenuBar *menubar;
     QStatusBar *statusbar;
@@ -610,15 +610,15 @@ public:
 
         verticalLayout_3->addItem(horizontalSpacer_2);
 
-        btnSaveTarget_4 = new QPushButton(tab_targets);
-        btnSaveTarget_4->setObjectName(QString::fromUtf8("btnSaveTarget_4"));
+        btnStartProgram = new QPushButton(tab_targets);
+        btnStartProgram->setObjectName(QString::fromUtf8("btnStartProgram"));
 
-        verticalLayout_3->addWidget(btnSaveTarget_4);
+        verticalLayout_3->addWidget(btnStartProgram);
 
-        btnSaveTarget_3 = new QPushButton(tab_targets);
-        btnSaveTarget_3->setObjectName(QString::fromUtf8("btnSaveTarget_3"));
+        btnSopProgram = new QPushButton(tab_targets);
+        btnSopProgram->setObjectName(QString::fromUtf8("btnSopProgram"));
 
-        verticalLayout_3->addWidget(btnSaveTarget_3);
+        verticalLayout_3->addWidget(btnSopProgram);
 
         textTargetValues = new QTextEdit(tab_targets);
         textTargetValues->setObjectName(QString::fromUtf8("textTargetValues"));
@@ -717,8 +717,8 @@ public:
         labelJoint6Value_3->setText(QCoreApplication::translate("MainWindow", "Yaw:", nullptr));
         labelJoint1Value_3->setText(QCoreApplication::translate("MainWindow", "X:", nullptr));
         valueJoint2_3->setText(QCoreApplication::translate("MainWindow", "0.0", nullptr));
-        btnSaveTarget_4->setText(QCoreApplication::translate("MainWindow", "Stop Program", nullptr));
-        btnSaveTarget_3->setText(QCoreApplication::translate("MainWindow", "Start Progarm", nullptr));
+        btnStartProgram->setText(QCoreApplication::translate("MainWindow", "Start Program", nullptr));
+        btnSopProgram->setText(QCoreApplication::translate("MainWindow", "Stop Progarm", nullptr));
         tabWidget->setTabText(tabWidget->indexOf(tab_targets), QCoreApplication::translate("MainWindow", "Targets", nullptr));
     } // retranslateUi
 

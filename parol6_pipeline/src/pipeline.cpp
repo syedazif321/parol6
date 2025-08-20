@@ -36,19 +36,19 @@ static double pos_distance(const geometry_msgs::msg::Pose &a,
   return std::sqrt(dx*dx + dy*dy + dz*dz);
 }
 
-static std::string now_local_str() {
-  auto now = std::chrono::system_clock::now();
-  std::time_t t = std::chrono::system_clock::to_time_t(now);
-  std::tm tm{};
-#ifdef _WIN32
-  localtime_s(&tm, &t);
-#else
-  localtime_r(&t, &tm);
-#endif
-  char buf[32];
-  std::strftime(buf, sizeof(buf), "%F %T", &tm);
-  return std::string(buf);
-}
+// static std::string now_local_str() {
+//   auto now = std::chrono::system_clock::now();
+//   std::time_t t = std::chrono::system_clock::to_time_t(now);
+//   std::tm tm{};
+// #ifdef _WIN32
+//   localtime_s(&tm, &t);
+// #else
+//   localtime_r(&t, &tm);
+// #endif
+//   char buf[32];
+//   std::strftime(buf, sizeof(buf), "%F %T", &tm);
+//   return std::string(buf);
+// }
 
 class PipelineNode : public rclcpp::Node {
 public:
@@ -87,7 +87,7 @@ public:
     traj_pub_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>(
                   "/arm_controller/joint_trajectory", rclcpp::QoS(10));
 
-    analytics_pub_ = this->create_publisher<std_msgs::msg::String>("/analytics/event", rclcpp::QoS(50));
+    // analytics_pub_ = this->create_publisher<std_msgs::msg::String>("/analytics/event", rclcpp::QoS(50));
 
 
     start_service_ = this->create_service<std_srvs::srv::Trigger>(
@@ -115,21 +115,21 @@ public:
     });
   }
 
-  void publishAnalyticsEvent(const std::string& evt,
-                            const std::string& model,
-                            const std::string& color="",
-                            const std::string& size="") {
-    nlohmann::json j = {
-      {"event", evt},
-      {"model", model},
-      {"color", color},
-      {"size",  size},
-      {"timestamp", now_local_str()} // reuse helper or implement similar
-    };
-    std_msgs::msg::String m;
-    m.data = j.dump();
-    analytics_pub_->publish(m);
-  }
+  // void publishAnalyticsEvent(const std::string& evt,
+  //                           const std::string& model,
+  //                           const std::string& color="",
+  //                           const std::string& size="") {
+  //   nlohmann::json j = {
+  //     {"event", evt},
+  //     {"model", model},
+  //     {"color", color},
+  //     {"size",  size},
+  //     {"timestamp", now_local_str()} // reuse helper or implement similar
+  //   };
+  //   std_msgs::msg::String m;
+  //   m.data = j.dump();
+  //   analytics_pub_->publish(m);
+  // }
 
   void run() {
     RCLCPP_INFO(this->get_logger(), "Waiting for start_pipeline service call...");
@@ -147,7 +147,7 @@ public:
     vision_enabled_.store(false); 
 
 
-    if (!doInitialFeed(3, 2s)) {
+    if (!doInitialFeed(3, 3s)) {
       RCLCPP_ERROR(get_logger(), "Initial feed failed.");
       return;
     }
@@ -202,9 +202,9 @@ private:
   static constexpr bool   kEnforceMsgStamp    = false;
   static constexpr double kColorGraceSec      = 12.0;
 
-  static constexpr double kConveyor2Step      = 0.25;
-  static constexpr double kConveyor1Step      = 0.215;
-  static constexpr double kConveyor3Step      = 0.215;
+  static constexpr double kConveyor2Step      = 0.265;
+  static constexpr double kConveyor1Step      = 0.26;
+  static constexpr double kConveyor3Step      = 0.26;
 
   static constexpr double kJointMoveSeconds   = 1.0;
   static constexpr double kPickSettleSec      = 0.8;
@@ -242,7 +242,7 @@ private:
   bool processPickDropCycle(const geometry_msgs::msg::PoseStamped& det_pose_in,
                             const std::string& det_color)
   {
-    publishAnalyticsEvent("detection", current_model_name_, det_color, /*size*/"");
+    // publishAnalyticsEvent("detection", current_model_name_, det_color, /*size*/"");
 
     RCLCPP_INFO(get_logger(), "==== Executing cycle for color: %s ====", det_color.c_str());
 
@@ -253,7 +253,7 @@ private:
     std::this_thread::sleep_for(0.4s);
 
     if (!attachDetach(current_model_name_, true)) {
-      publishAnalyticsEvent("pick", current_model_name_);
+      // publishAnalyticsEvent("pick", current_model_name_);
       RCLCPP_WARN(get_logger(), "Attach (suction ON) reported failure for %s. Continuing.",
                   current_model_name_.c_str());
     } else {
@@ -282,7 +282,7 @@ private:
 
     std::this_thread::sleep_for(0.2s);
     if (!attachDetach(current_model_name_, false)) {
-      publishAnalyticsEvent("place", current_model_name_);
+      // publishAnalyticsEvent("place", current_model_name_);
       RCLCPP_WARN(get_logger(), "Detach reported failure for %s (maybe already detached). Continuing.",
                   current_model_name_.c_str());
     } else {
@@ -304,8 +304,8 @@ private:
       if (!moveToTargetAndWait("conveyor_3"))     return false;
       if (!moveToTargetAndWait("conveyor_3_pre")) return false;
     }
-    if (!moveToTargetAndWait("home")) return false;
-    if (!moveToTargetAndWait("init_pose")) {
+    // if (!moveToTargetAndWait("home")) return false;
+    if (!moveToTargetAndWait("home")) {
       RCLCPP_WARN(get_logger(), "No init_pose target; staying at home.");
     }
 
@@ -317,7 +317,6 @@ private:
     return true;
   }
 
-  // ---------- JointTrajectory helpers (publisher-only) ----------
   bool sendJoints(const std::vector<double>& joint_positions, double seconds=kJointMoveSeconds) {
     if (joint_positions.size() != 6) {
       RCLCPP_ERROR(get_logger(), "Expected 6 joint positions, got %zu", joint_positions.size());
@@ -594,7 +593,7 @@ private:
           vision_enabled_.store(false);
           RCLCPP_INFO(get_logger(), " Vision stopped (stable pose + color).");
   
-          publishAnalyticsEvent("detection", nextModelName(cur_color), cur_color, /*size*/""); 
+          // publishAnalyticsEvent("detection", nextModelName(cur_color), cur_color, /*size*/""); 
   
           return std::make_pair(*stable_pose, cur_color);
         }
@@ -678,8 +677,8 @@ private:
   }
 
   void loadTargetsJson() {
-    const std::string a = "/home/azif/parol6/robot_data/Targets.json";
-    const std::string b = "/home/azif/parol6/robot_data/Targets.json"; 
+    const std::string a = "/home/azif/projetcs/parol6/robot_data/Targets.json";
+    const std::string b = "/home/azif/projetcs/parol6/robot_data/Targets.json"; 
 
     for (auto &p : {a, b}) {
       std::ifstream f(p);

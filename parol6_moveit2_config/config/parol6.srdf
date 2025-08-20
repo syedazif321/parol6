@@ -33,13 +33,15 @@
 
   <!-- Initial joint values -->
   <group_state name="init_pose" group="arm">
-    <joint name="J1" value="0"/>
-    <joint name="J2" value="0"/>
-    <joint name="J3" value="0"/>
-    <joint name="J4" value="0"/>
-    <joint name="J5" value="0"/>
+    <joint name="J1" value="-0.0005070218381764136"/>
+    <joint name="J2" value="-0.5568375756109605"/>
+    <joint name="J3" value="0.6812298373439889"/>
+    <joint name="J4" value="-0.00020125100240875327"/>
+    <joint name="J5" value="-0.12473"/>
     <joint name="J6" value="0"/>
   </group_state>
+
+
 
   <!-- Disable collision pairs -->
   <disable_collisions link1="L1" link2="L2" reason="Adjacent"/>

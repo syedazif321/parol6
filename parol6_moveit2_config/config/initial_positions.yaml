@@ -1,9 +1,9 @@
 # Default initial positions for parol6's ros2_control fake system
 
 initial_positions:
-  J1: 0
-  J2: 0
-  J3: 0
-  J4: 0
-  J5: 0
-  J6: 0
+  J1: -0.0005070218381764136
+  J2: -0.5568375756109605
+  J3: 0.6812298373439889
+  J4: -0.00020125100240875327
+  J5: -0.1247341926194041
+  J6: -0.0002801492117567861

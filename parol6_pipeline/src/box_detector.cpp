@@ -1,4 +1,3 @@
-// File: src/box_detector.cpp
 
 #include "parol6_pipeline/box_detector.hpp"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -172,30 +171,56 @@ void BoxDetector::imageCallback(
         double yaw = -rect.angle * M_PI / 180.0;
         if (yaw >  M_PI/2) yaw -= M_PI;
         if (yaw < -M_PI/2) yaw += M_PI;
-        q.setRPY(M_PI, 0.0, yaw);
-        q.normalize();
 
+        // 2. Camera-local orientation (object lying flat)
+        tf2::Quaternion q_cam;
+        q_cam.setRPY(0.0, 0.0, yaw); // yaw only, in camera frame
+
+        // 3. Fixed grasp orientation offset to ensure Z-up in base_link
+        // This is independent of camera tilt (TF will rotate it into base_link later)
+        tf2::Quaternion grasp_offset;
+        grasp_offset.setRPY(0.0, 0.0, 0.0); // flip Z to point downwards
+
+        q_cam = grasp_offset * q_cam;
+        q_cam.normalize();
+
+        // 4. Fill cam_pose
         geometry_msgs::msg::PoseStamped cam_pose;
         cam_pose.header = rgb_msg->header;
         cam_pose.header.frame_id = camera_frame_;
         cam_pose.pose.position.x = X;
         cam_pose.pose.position.y = Y;
         cam_pose.pose.position.z = Z;
-        cam_pose.pose.orientation = tf2::toMsg(q);
+        cam_pose.pose.orientation = tf2::toMsg(q_cam);
 
+        // 5. Transform to base_link
         try {
-          auto base_pose = tf_buffer_->transform(cam_pose, "base_link", tf2::durationFromSec(0.1));
-          double d = std::sqrt(
-              base_pose.pose.position.x * base_pose.pose.position.x +
-              base_pose.pose.position.y * base_pose.pose.position.y +
-              base_pose.pose.position.z * base_pose.pose.position.z);
+            auto base_pose = tf_buffer_->transform(cam_pose, "base_link", tf2::durationFromSec(0.1));
 
-          if (!best.has_value() || d < best->dist) {
-            best = Candidate{base_pose, color, d, rect};
-          }
+            // (Optional) Force Z-axis upright in base_link
+            tf2::Quaternion q_base;
+            tf2::fromMsg(base_pose.pose.orientation, q_base);
+
+            // Remove roll/pitch, keep yaw only
+            double roll_b, pitch_b, yaw_b;
+            tf2::Matrix3x3(q_base).getRPY(roll_b, pitch_b, yaw_b);
+            tf2::Quaternion q_fixed;
+            q_fixed.setRPY(M_PI, 0.0, 0.0); // keep yaw only
+            q_fixed.normalize();
+            base_pose.pose.orientation = tf2::toMsg(q_fixed);
+
+            double d = std::sqrt(
+                base_pose.pose.position.x * base_pose.pose.position.x +
+                base_pose.pose.position.y * base_pose.pose.position.y +
+                base_pose.pose.position.z * base_pose.pose.position.z);
+
+            if (!best.has_value() || d < best->dist) {
+                best = Candidate{base_pose, color, d, rect};
+            }
         } catch (const tf2::TransformException& ex) {
-          RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000, "[%s] TF error: %s", color.c_str(), ex.what());
-          continue;
+            RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000, "[%s] TF error: %s", color.c_str(), ex.what());
+            continue;
+
         }
       }
     };
@@ -311,4 +336,4 @@ int main(int argc, char** argv)
   rclcpp::spin(std::make_shared<BoxDetector>());
   rclcpp::shutdown();
   return 0;
-}
+} 
