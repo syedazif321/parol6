@@ -16,6 +16,9 @@
 #include <rclcpp/rclcpp.hpp>
 #include <trajectory_msgs/msg/joint_trajectory_point.hpp>
 
+
+
+
 #if __has_include(<tf2_ros/transform_listener.h>)
   #define HAVE_TF2 1
   #include <tf2_ros/transform_listener.h>
@@ -125,6 +128,21 @@ MainWindow::MainWindow(QWidget *parent)
     servo_off_client_ = ros_node_->create_client<std_srvs::srv::Trigger>("/servo_node/stop_servo");
     trajectory_action_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(
         ros_node_, "/arm_controller/follow_joint_trajectory");
+
+    speed_pub_ = ros_node_->create_publisher<std_msgs::msg::Float64>("/pipeline/speed", 10);
+
+
+    // Subscriber for box count
+    box_count_sub_ = ros_node_->create_subscription<std_msgs::msg::Int32>(
+        "/pipeline/box_count", 10,
+        [this](const std_msgs::msg::Int32::SharedPtr msg) {
+            QString text = QString("Boxes: %1").arg(msg->data);
+            // update GUI from ROS thread safely
+            QMetaObject::invokeMethod(this, [this, text]() {
+                ui->labelBoxCount->setText(text);
+            });
+        });
+
 
     // start/stop pipeline & IK
     start_pipeline_client_ = ros_node_->create_client<std_srvs::srv::Trigger>("/start_pipeline");
@@ -296,10 +314,15 @@ void MainWindow::on_btnShowPoseValues_clicked(){
 }
 
 void MainWindow::on_sliderSpeed_valueChanged(int value){
-    double speed = value/100.0;
+    double speed = value / 100.0;
+
     ui->labelCurrentSpeed->setText(QString::number(speed,'f',2)+"x");
     ui->labelActiveSpeed->setText(QString("Speed: %1x").arg(QString::number(speed,'f',2)));
+    auto msg = std_msgs::msg::Float64();
+    msg.data = speed;
+    speed_pub_->publish(msg);
 }
+
 
 
 void MainWindow::sendTrajectoryToTarget(const std::vector<double>& joint_positions){

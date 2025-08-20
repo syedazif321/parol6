@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <cctype>
 #include <cmath>
+#include <algorithm>  // std::clamp
 
 using nlohmann::json;
 using namespace std::chrono_literals;
@@ -102,7 +103,6 @@ private:
   bool loaded_{false};
 };
 
-// -------- MotionController --------
 class MotionController {
 public:
   MotionController(rclcpp::Node* node, const std::string& planning_group)
@@ -118,11 +118,26 @@ public:
   }
   void clearStop() { stop_flag_.store(false); }
 
+  void setSpeedScale(double s) {
+    const double clamped = std::clamp(s, 0.1, 1.0);
+    speed_scale_.store(clamped);
+    std::lock_guard<std::mutex> lk(mgi_mutex_);
+    if (mgi_) {
+      mgi_->setMaxVelocityScalingFactor(clamped);
+      mgi_->setMaxAccelerationScalingFactor(clamped);
+    }
+    RCLCPP_INFO(logger_, "Motion speed scale set to %.2fx", clamped);
+  }
+
   bool planAndExecuteJoints(const std::vector<double>& joints, const std::string& label) {
     if (stop_flag_.load()) return false;
     auto mgi = ensureMoveGroup();
     if (!mgi) return false;
     try {
+      const double s = speed_scale_.load();
+      mgi->setMaxVelocityScalingFactor(s);
+      mgi->setMaxAccelerationScalingFactor(s);
+
       mgi->setJointValueTarget(joints);
       moveit::planning_interface::MoveGroupInterface::Plan plan;
       auto pc = mgi->plan(plan);
@@ -148,6 +163,10 @@ public:
     auto mgi = ensureMoveGroup();
     if (!mgi) return false;
     try {
+      const double s = speed_scale_.load();   
+      mgi->setMaxVelocityScalingFactor(s);
+      mgi->setMaxAccelerationScalingFactor(s);
+
       mgi->setPoseTarget(pose);
       moveit::planning_interface::MoveGroupInterface::Plan plan;
       auto pc = mgi->plan(plan);
@@ -174,9 +193,11 @@ private:
     if (!mgi_) {
       mgi_ = std::make_unique<moveit::planning_interface::MoveGroupInterface>(
         node_->shared_from_this(), planning_group_);
-      mgi_->setMaxVelocityScalingFactor(1.0);
-      mgi_->setMaxAccelerationScalingFactor(1.0);
-      RCLCPP_INFO(logger_, "MoveGroupInterface created for group '%s'", planning_group_.c_str());
+      const double s = speed_scale_.load();
+      mgi_->setMaxVelocityScalingFactor(s);
+      mgi_->setMaxAccelerationScalingFactor(s);
+      RCLCPP_INFO(logger_, "MoveGroupInterface created for group '%s' (speed %.2fx)",
+                  planning_group_.c_str(), s);
     }
     return mgi_.get();
   }
@@ -187,9 +208,10 @@ private:
   std::unique_ptr<moveit::planning_interface::MoveGroupInterface> mgi_;
   std::mutex mgi_mutex_;
   std::atomic<bool> stop_flag_{false};
+  std::atomic<double> speed_scale_{1.0}; 
 };
 
-// -------- Gripper (Attach/Detach) --------
+
 class Gripper {
 public:
   explicit Gripper(rclcpp::Node* node)
@@ -289,7 +311,6 @@ private:
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr start_pick_client_;
 };
 
-// -------- Conveyor --------
 class Conveyor {
 public:
   explicit Conveyor(rclcpp::Node* node) : node_(node), logger_(node->get_logger()) {}
@@ -323,7 +344,7 @@ private:
   rclcpp::Logger logger_;
 };
 
-// -------- VisionManager --------
+
 class VisionManager {
 public:
   explicit VisionManager(rclcpp::Node* node)

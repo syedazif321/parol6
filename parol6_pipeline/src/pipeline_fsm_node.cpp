@@ -6,6 +6,7 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
+#include <algorithm>  
 
 class PipelineFSM : public rclcpp::Node {
 public:
@@ -34,15 +35,29 @@ public:
 
     init_feed_times_    = this->declare_parameter<int>("initial_feed_times", 3);
 
-    // Tunable gaps (optional; keep defaults if you don't need spacing)
     initial_feed_gap_sec_ = this->declare_parameter<double>("initial_feed_gap_sec", 3.0);
     tail_feed_gap_sec_    = this->declare_parameter<double>("tail_feed_gap_sec", 2.0);
     cycle_gap_sec_        = this->declare_parameter<double>("cycle_gap_sec", 3.0);
 
-    // Load targets early (and loudly)
     if (!target_db_.load(targets_json_path_)) {
       RCLCPP_ERROR(this->get_logger(), "Failed to load Targets.json from '%s'", targets_json_path_.c_str());
     }
+
+    speed_sub_ = this->create_subscription<std_msgs::msg::Float64>(
+        "/pipeline/speed", 10,
+        [this](const std_msgs::msg::Float64::SharedPtr msg){
+            current_speed_ = msg->data;
+            RCLCPP_INFO(this->get_logger(), "Pipeline speed set to %.2fx", current_speed_);
+        }
+    );
+
+    const double default_speed = this->declare_parameter<double>("default_speed_scale", 1.0);
+    motion_.setSpeedScale(std::clamp(default_speed, 0.1, 1.0));
+
+
+    box_count_pub_ = this->create_publisher<std_msgs::msg::Int32>("/pipeline/box_count", 10);
+    box_count_ = 0;
+    publishBoxCount();  
 
     start_srv_ = this->create_service<std_srvs::srv::Trigger>(
       "start_pipeline",
@@ -102,12 +117,15 @@ private:
     WAIT
   };
 
-  // Helper function to get the current local time
   std::string now_local_str() const {
     auto now = std::chrono::system_clock::now();
     std::time_t t = std::chrono::system_clock::to_time_t(now);
     std::tm tm{};
-    localtime_r(&t, &tm); // for Linux and MacOS, use `localtime_r`
+#if defined(_WIN32)
+    localtime_s(&tm, &t);
+#else
+    localtime_r(&t, &tm);
+#endif
     char buf[32];
     std::strftime(buf, sizeof(buf), "%F %T", &tm);
     return std::string(buf);
@@ -190,13 +208,21 @@ private:
     state_ = State::START_PICK;
   }
 
-
   void stepInitFeed() {
     if (init_feed_remaining_ <= 0) {
       RCLCPP_INFO(get_logger(), "INIT_FEED done -> VISION_FIXED");
       state_ = State::VISION_FIXED; return;
     }
-    if (!vision_.spawnBox()) { RCLCPP_ERROR(get_logger(), "INIT_FEED: spawn failed"); running_.store(false); return; }
+
+    if (vision_.spawnBox()) {
+      ++box_count_;
+      publishBoxCount();
+    } else {
+      RCLCPP_ERROR(get_logger(), "INIT_FEED: spawn failed");
+      running_.store(false);
+      return;
+    }
+
     std::this_thread::sleep_for(1s);
     if (!conveyor_.move("/conveyor2/MoveDistance", kConveyor2Step_)) { running_.store(false); return; }
 
@@ -223,7 +249,7 @@ private:
     // Publish detection event
     auto msg = std::make_shared<std_msgs::msg::String>();
     msg->data = R"({"event": "detection", "model": ")" + model_name_ + R"(", "color": ")" + det_color_ + R"(", "size": "small", "timestamp": ")" + now_local_str() + R"("})";
-    pub_event_->publish(*msg); // Assuming pub_event_ is properly initialized
+    pub_event_->publish(*msg);
 
     state_ = State::START_PICK;
   }
@@ -235,7 +261,7 @@ private:
     // Publish pick event
     auto msg = std::make_shared<std_msgs::msg::String>();
     msg->data = R"({"event": "pick", "model": ")" + model_name_ + R"(", "color": ")" + det_color_ + R"(", "size": "small", "timestamp": ")" + now_local_str() + R"("})";
-    pub_event_->publish(*msg); // Publish pick event
+    pub_event_->publish(*msg);
 
     std::this_thread::sleep_for(400ms);
     state_ = State::ATTACH;
@@ -275,7 +301,7 @@ private:
 
     (void)waitControllerReady(1.0);
 
-    RCLCPP_INFO(get_logger(), "MOVE_UP: executing 6-joint target");
+    RCLCPP_INFO(get_logger(), "MOVE_UP: executing 6-joint target (speed %.2fx)", speed_scale_.load());
     if (!motion_.planAndExecuteJoints(j, "move_up")) {
       RCLCPP_ERROR(get_logger(), "MOVE_UP: plan/execute failed (controller busy or planning error)");
       running_.store(false);
@@ -287,7 +313,10 @@ private:
 
   void stepFeedTail() {
     RCLCPP_INFO(get_logger(), "FEED_TAIL: spawn+nudge conveyor2");
-    (void)vision_.spawnBox();
+    if (vision_.spawnBox()) {
+      ++box_count_;
+      publishBoxCount();
+    }
     std::this_thread::sleep_for(1s);
     (void)conveyor_.move("/conveyor2/MoveDistance", kConveyor2Step_);
     beginWait(tail_feed_gap_sec_, State::ROUTE_PRE);
@@ -334,7 +363,7 @@ private:
     if (!motion_.planAndExecuteJoints(jp, "return_pre")) { running_.store(false); return; }
     auto msg = std::make_shared<std_msgs::msg::String>();
     msg->data = R"({"event": "place", "model": ")" + model_name_ + R"(", "color": ")" + det_color_ + R"(", "size": "small", "timestamp": ")" + now_local_str() + R"("})";
-    pub_event_->publish(*msg); // Publish place event
+    pub_event_->publish(*msg);
 
     state_ = State::RETURN_HOME;
   }
@@ -364,24 +393,33 @@ private:
     return cap + "_" + std::to_string(color_counts_[color]);
   }
 
-  // services
+  void publishBoxCount() {
+    auto m = std_msgs::msg::Int32();
+    m.data = box_count_;
+    box_count_pub_->publish(m);
+    RCLCPP_INFO(get_logger(), "Published box count: %d", box_count_);
+  }
+
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_srv_, stop_srv_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_event_;
 
-  // subsystems
+  rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr speed_sub_;
+  double current_speed_ = 1.0;  // default speed
+  rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr   box_count_pub_;
+  std::atomic<double> speed_scale_{1.0};
+  int box_count_{0};
+
   TargetDB         target_db_;
   MotionController motion_;
   Gripper          gripper_;
   Conveyor         conveyor_;
   VisionManager    vision_;
 
-  // fsm & control
   std::atomic<bool> running_{false};
   std::atomic<bool> stop_requested_{false};
   State state_;
   int cycles_done_{0};
 
-  // params
   std::string targets_json_path_;
   int init_feed_times_{3};
   int init_feed_remaining_{3};
@@ -395,17 +433,14 @@ private:
   double kConveyor1Step_;
   double kConveyor3Step_;
 
-  // timing params
   double initial_feed_gap_sec_{3.0};
   double tail_feed_gap_sec_{2.0};
   double cycle_gap_sec_{3.0};
 
-  // wait machinery
   rclcpp::Time wait_until_;
   State        after_wait_{State::CYCLE_VISION};
   bool         waiting_{false};
 
-  // cycle context
   geometry_msgs::msg::PoseStamped det_pose_;
   std::string det_color_;
   std::string model_name_;

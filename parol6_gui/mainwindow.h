@@ -15,6 +15,10 @@
 #include <memory>
 #include <mutex>
 
+#include <std_msgs/msg/float64.hpp>
+#include <std_msgs/msg/int32.hpp>
+#include <thread>
+
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
@@ -114,6 +118,11 @@ private:
     rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr start_pipeline_client_;
     rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr stop_pipeline_client_;
     rclcpp::Client<moveit_msgs::srv::GetPositionIK>::SharedPtr compute_ik_client_;
+
+    rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr speed_pub_;
+    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr box_count_sub_;
+
+
 
     std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
     std::unique_ptr<tf2_ros::TransformListener> tf_listener_;
