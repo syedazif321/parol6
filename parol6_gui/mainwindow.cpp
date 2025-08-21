@@ -130,21 +130,25 @@ MainWindow::MainWindow(QWidget *parent)
         ros_node_, "/arm_controller/follow_joint_trajectory");
 
     speed_pub_ = ros_node_->create_publisher<std_msgs::msg::Float64>("/pipeline/speed", 10);
+    
 
+    box_info_sub_ = ros_node_->create_subscription<std_msgs::msg::String>(
+        "/detected_box_info", 10,
+        [this](const std_msgs::msg::String::SharedPtr msg) {
+            QMetaObject::invokeMethod(this, [this, msg]() {
+                ui->textTargetValues->setPlainText(QString::fromStdString(msg->data));
+            });
+        });
 
-    // Subscriber for box count
     box_count_sub_ = ros_node_->create_subscription<std_msgs::msg::Int32>(
         "/pipeline/box_count", 10,
         [this](const std_msgs::msg::Int32::SharedPtr msg) {
             QString text = QString("Boxes: %1").arg(msg->data);
-            // update GUI from ROS thread safely
             QMetaObject::invokeMethod(this, [this, text]() {
                 ui->labelBoxCount->setText(text);
             });
         });
 
-
-    // start/stop pipeline & IK
     start_pipeline_client_ = ros_node_->create_client<std_srvs::srv::Trigger>("/start_pipeline");
     stop_pipeline_client_  = ros_node_->create_client<std_srvs::srv::Trigger>("/stop_pipeline");
     compute_ik_client_     = ros_node_->create_client<moveit_msgs::srv::GetPositionIK>("/compute_ik");

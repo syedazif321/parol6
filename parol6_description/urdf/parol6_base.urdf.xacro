@@ -228,7 +228,7 @@
       <material>Gazebo/Orange</material>
   </gazebo>
 
-  <joint name="J6" type="continuous">
+  <joint name="J6" type="revolute">
       <origin xyz="0.0 0.0 0.0" rpy="1.5708 0 0" />
       <parent link="L5" />
       <child link="L6" />
