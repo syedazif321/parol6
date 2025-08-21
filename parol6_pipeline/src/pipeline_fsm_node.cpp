@@ -2,11 +2,145 @@
 #include <unordered_map>
 #include <std_msgs/msg/float64.hpp>
 #include <std_msgs/msg/int32.hpp>
+#include <std_msgs/msg/string.hpp>
 #include <chrono>
 #include <ctime>
 #include <iomanip>
 #include <sstream>
-#include <algorithm>  
+#include <algorithm>
+#include <sqlite3.h>
+
+class AnalyticsDB {
+public:
+  explicit AnalyticsDB(rclcpp::Logger logger, const std::string &db_path = "analytics.db")
+  : logger_(logger), db_path_(db_path), db_(nullptr) {
+    open();
+  }
+
+  ~AnalyticsDB() {
+    close();
+  }
+
+  bool open() {
+    std::lock_guard<std::mutex> lk(m_);
+    if (db_) return true;
+    if (sqlite3_open(db_path_.c_str(), &db_) != SQLITE_OK) {
+      RCLCPP_ERROR(logger_, "AnalyticsDB: cannot open DB %s: %s", db_path_.c_str(), sqlite3_errmsg(db_));
+      sqlite3_close(db_);
+      db_ = nullptr;
+      return false;
+    }
+
+    // Enable foreign keys
+    exec("PRAGMA foreign_keys = ON;");
+
+    // Create tables
+    exec("CREATE TABLE IF NOT EXISTS simulation_sessions ("
+         "session_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+         "start_time TEXT NOT NULL,"
+         "end_time TEXT);");
+
+    exec("CREATE TABLE IF NOT EXISTS box_analytics ("
+         "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+         "session_id INTEGER NOT NULL,"
+         "box_id TEXT NOT NULL,"
+         "color TEXT,"
+         "size TEXT,"
+         "detection_time TEXT,"
+         "pick_time TEXT,"
+         "place_time TEXT,"
+         "cycle_duration REAL,"
+         "FOREIGN KEY(session_id) REFERENCES simulation_sessions(session_id));");
+
+    RCLCPP_INFO(logger_, "AnalyticsDB opened: %s", db_path_.c_str());
+    return true;
+  }
+
+  void close() {
+    std::lock_guard<std::mutex> lk(m_);
+    if (db_) {
+      sqlite3_close(db_);
+      db_ = nullptr;
+      RCLCPP_INFO(logger_, "AnalyticsDB closed");
+    }
+  }
+
+  // Start a new simulation session. Returns session_id or -1 on error.
+  int startSession(const std::string &start_time) {
+    std::lock_guard<std::mutex> lk(m_);
+    if (!db_) return -1;
+    std::string sql = "INSERT INTO simulation_sessions (start_time) VALUES ('" + escape(start_time) + "');";
+    if (!exec(sql)) return -1;
+    int id = static_cast<int>(sqlite3_last_insert_rowid(db_));
+    RCLCPP_INFO(logger_, "AnalyticsDB: started session %d @ %s", id, start_time.c_str());
+    return id;
+  }
+
+  bool endSession(int session_id, const std::string &end_time) {
+    std::lock_guard<std::mutex> lk(m_);
+    if (!db_) return false;
+    std::string sql = "UPDATE simulation_sessions SET end_time='" + escape(end_time) + "' WHERE session_id=" + std::to_string(session_id) + ";";
+    return exec(sql);
+  }
+
+  bool logDetection(int session_id, const std::string &box_id,
+                    const std::string &color, const std::string &size, const std::string &timestamp) {
+    std::lock_guard<std::mutex> lk(m_);
+    if (!db_) return false;
+    std::string sql = "INSERT INTO box_analytics (session_id, box_id, color, size, detection_time) VALUES ("
+                      + std::to_string(session_id) + ", '" + escape(box_id) + "', '" + escape(color) + "', '" + escape(size) + "', '" + escape(timestamp) + "');";
+    return exec(sql);
+  }
+
+  bool logPick(const std::string &box_id, const std::string &timestamp) {
+    std::lock_guard<std::mutex> lk(m_);
+    if (!db_) return false;
+    std::string sql = "UPDATE box_analytics SET pick_time='" + escape(timestamp) + "' WHERE box_id='" + escape(box_id) + "';";
+    return exec(sql);
+  }
+
+  // When logging place, also compute cycle_duration in seconds using detection_time
+  bool logPlace(const std::string &box_id, const std::string &timestamp) {
+    std::lock_guard<std::mutex> lk(m_);
+    if (!db_) return false;
+    // Update place_time
+    std::string sql_upd = "UPDATE box_analytics SET place_time='" + escape(timestamp) + "' WHERE box_id='" + escape(box_id) + "';";
+    if (!exec(sql_upd)) return false;
+
+    // Compute cycle_duration using julianday difference
+    std::string sql_calc = "UPDATE box_analytics SET cycle_duration=(julianday(place_time)-julianday(detection_time))*86400.0 WHERE box_id='" + escape(box_id) + "' AND detection_time IS NOT NULL AND place_time IS NOT NULL;";
+    return exec(sql_calc);
+  }
+
+private:
+  bool exec(const std::string &sql) {
+    if (!db_) return false;
+    char *errmsg = nullptr;
+    if (sqlite3_exec(db_, sql.c_str(), nullptr, nullptr, &errmsg) != SQLITE_OK) {
+      RCLCPP_ERROR(logger_, "AnalyticsDB SQL error: %s", errmsg ? errmsg : "(unknown)");
+      if (errmsg) sqlite3_free(errmsg);
+      return false;
+    }
+    return true;
+  }
+
+  std::string escape(const std::string &s) const {
+    // very small escape for single-quote by doubling
+    std::string out; out.reserve(s.size()*2);
+    for (char c : s) {
+      if (c == '\'') out.push_back('\''), out.push_back('\'');
+      else out.push_back(c);
+    }
+    return out;
+  }
+
+  rclcpp::Logger logger_;
+  std::string db_path_;
+  sqlite3 *db_;
+  std::mutex m_;
+};
+
+// ----------------- PipelineFSM (modified) -----------------
 
 class PipelineFSM : public rclcpp::Node {
 public:
@@ -16,9 +150,10 @@ public:
     motion_(this, "arm"),
     gripper_(this),
     conveyor_(this),
-    vision_(this) {
+    vision_(this),
+    analytics_(this->get_logger(), "analytics.db") {
 
-    // Parameters
+    // Parameters (same as before)
     targets_json_path_ = this->declare_parameter<std::string>(
       "targets_json_path", "/home/azif/projetcs/parol6/robot_data/Targets.json");
     pub_event_ = this->create_publisher<std_msgs::msg::String>("/analytics/event", 10);
@@ -74,9 +209,15 @@ public:
         motion_.clearStop();
         vision_.clearStop();
         running_.store(true);
+
+        // start analytics session
+        std::string t0 = now_local_str();
+        analytics_session_id_ = analytics_.startSession(t0);
+        if (analytics_session_id_ < 0) RCLCPP_WARN(this->get_logger(), "Analytics session failed to start");
+
         res->success = true;
         res->message = "Pipeline running";
-        RCLCPP_INFO(this->get_logger(), "[SERVICE] start_pipeline: RUNNING");
+        RCLCPP_INFO(this->get_logger(), "[SERVICE] start_pipeline: RUNNING (analytics session=%d)", analytics_session_id_);
       });
 
     stop_srv_ = this->create_service<std_srvs::srv::Trigger>(
@@ -88,9 +229,14 @@ public:
         running_.store(false);
         motion_.requestStop();
         vision_.requestStop();
+
+        // end analytics session
+        std::string tend = now_local_str();
+        if (analytics_session_id_ >= 0) analytics_.endSession(analytics_session_id_, tend);
+
         res->success = true;
         res->message = "Pipeline stopped";
-        RCLCPP_WARN(this->get_logger(), "[SERVICE] stop_pipeline: STOPPED");
+        RCLCPP_WARN(this->get_logger(), "[SERVICE] stop_pipeline: STOPPED (analytics session ended)");
       });
 
     // FSM init
@@ -205,6 +351,12 @@ private:
     det_color_ = vd->second;
     model_name_ = nextModelName(det_color_);
     RCLCPP_INFO(get_logger(), "CYCLE_VISION: color=%s model=%s", det_color_.c_str(), model_name_.c_str());
+
+    // Log detection in DB
+    if (analytics_session_id_ >= 0) {
+      analytics_.logDetection(analytics_session_id_, model_name_, det_color_, "small", now_local_str());
+    }
+
     state_ = State::START_PICK;
   }
 
@@ -251,6 +403,11 @@ private:
     msg->data = R"({"event": "detection", "model": ")" + model_name_ + R"(", "color": ")" + det_color_ + R"(", "size": "small", "timestamp": ")" + now_local_str() + R"("})";
     pub_event_->publish(*msg);
 
+    // Log detection in DB
+    if (analytics_session_id_ >= 0) {
+      analytics_.logDetection(analytics_session_id_, model_name_, det_color_, "small", now_local_str());
+    }
+
     state_ = State::START_PICK;
   }
 
@@ -262,6 +419,11 @@ private:
     auto msg = std::make_shared<std_msgs::msg::String>();
     msg->data = R"({"event": "pick", "model": ")" + model_name_ + R"(", "color": ")" + det_color_ + R"(", "size": "small", "timestamp": ")" + now_local_str() + R"("})";
     pub_event_->publish(*msg);
+
+    // Log pick time
+    if (analytics_session_id_ >= 0) {
+      analytics_.logPick(model_name_, now_local_str());
+    }
 
     std::this_thread::sleep_for(400ms);
     state_ = State::ATTACH;
@@ -361,9 +523,16 @@ private:
     }
     if (!motion_.planAndExecuteJoints(jf, "return_fin")) { running_.store(false); return; }
     if (!motion_.planAndExecuteJoints(jp, "return_pre")) { running_.store(false); return; }
+
+    // Publish place event
     auto msg = std::make_shared<std_msgs::msg::String>();
     msg->data = R"({"event": "place", "model": ")" + model_name_ + R"(", "color": ")" + det_color_ + R"(", "size": "small", "timestamp": ")" + now_local_str() + R"("})";
     pub_event_->publish(*msg);
+
+    // Log place & compute duration in DB
+    if (analytics_session_id_ >= 0) {
+      analytics_.logPlace(model_name_, now_local_str());
+    }
 
     state_ = State::RETURN_HOME;
   }
@@ -400,6 +569,7 @@ private:
     RCLCPP_INFO(get_logger(), "Published box count: %d", box_count_);
   }
 
+  // members (same as before) + analytics
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_srv_, stop_srv_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_event_;
 
@@ -414,6 +584,7 @@ private:
   Gripper          gripper_;
   Conveyor         conveyor_;
   VisionManager    vision_;
+  AnalyticsDB      analytics_;
 
   std::atomic<bool> running_{false};
   std::atomic<bool> stop_requested_{false};
@@ -445,6 +616,8 @@ private:
   std::string det_color_;
   std::string model_name_;
   std::unordered_map<std::string,int> color_counts_{{"red",0},{"blue",0}};
+
+  int analytics_session_id_{-1};
 };
 
 int main(int argc, char* argv[]) {
