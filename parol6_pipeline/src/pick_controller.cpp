@@ -1,13 +1,13 @@
-
-
+// File: src/pick_controller.cpp
 #include "parol6_pipeline/pick_controller.hpp"
 
 // ROS & MoveIt
 #include <moveit_msgs/msg/move_it_error_codes.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <rclcpp/duration.hpp> 
+#include <rclcpp/duration.hpp>
 
-
+// Add missing includes
+#include <std_msgs/msg/float64.hpp>  // ← Critical!
 #include <memory>
 
 namespace parol6_pipeline
@@ -17,17 +17,35 @@ PickController::PickController(const rclcpp::NodeOptions & options)
 : Node("pick_controller", options),
   logger_(get_logger()),
   received_pose_(false),
-  move_group_initialized_(false)
+  move_group_initialized_(false),
+  current_speed_(1.0)  // ← Initialize speed to 1.0x
 {
   RCLCPP_INFO(logger_, "PickController started. Waiting for /detected_box_pose and /start_picking trigger.");
 
+  // Subscribe to detected box pose
   pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     "/detected_box_pose",
     10,
     std::bind(&PickController::pose_callback, this, std::placeholders::_1)
   );
 
- 
+  // 🔔 Subscribe to speed changes from GUI
+  speed_sub_ = create_subscription<std_msgs::msg::Float64>(
+    "/pipeline/speed",
+    10,
+    [this](const std_msgs::msg::Float64::SharedPtr msg) {
+      current_speed_ = std::clamp(msg->data, 0.1, 1.0);
+      RCLCPP_INFO(logger_, "Speed updated to %.2fx (from slider)", current_speed_);
+
+      // If MoveGroup is already initialized, update it immediately
+      if (move_group_) {
+        move_group_->setMaxVelocityScalingFactor(current_speed_);
+        move_group_->setMaxAccelerationScalingFactor(current_speed_);
+      }
+    }
+  );
+
+  // Service to trigger picking
   trigger_srv_ = create_service<std_srvs::srv::Trigger>(
     "start_picking",
     [this](
@@ -35,7 +53,6 @@ PickController::PickController(const rclcpp::NodeOptions & options)
       std::shared_ptr<std_srvs::srv::Trigger::Response> response
     )
     {
-
       if (!received_pose_) {
         response->success = false;
         response->message = "No box pose received yet!";
@@ -86,10 +103,11 @@ void PickController::initialize_move_group()
   try {
     move_group_ = std::make_unique<moveit::planning_interface::MoveGroupInterface>(shared_from_this(), "arm");
 
-    move_group_->setMaxVelocityScalingFactor(1.0);
-    move_group_->setMaxAccelerationScalingFactor(1.0);
+    // ✅ Apply current speed (from slider)
+    move_group_->setMaxVelocityScalingFactor(current_speed_);
+    move_group_->setMaxAccelerationScalingFactor(current_speed_);
 
-    RCLCPP_INFO(logger_, "MoveGroupInterface initialized with 1.0x velocity and acceleration scaling.");
+    RCLCPP_INFO(logger_, "MoveGroupInterface initialized with speed %.2fx", current_speed_);
   } catch (const std::exception& e) {
     RCLCPP_ERROR(logger_, "Failed to initialize MoveGroupInterface: %s", e.what());
     move_group_.reset();
@@ -103,8 +121,9 @@ bool PickController::move_to_pose(const geometry_msgs::msg::PoseStamped& pose_ms
     return false;
   }
 
-  move_group_->setMaxVelocityScalingFactor(1.0);
-  move_group_->setMaxAccelerationScalingFactor(1.0);
+  // ✅ Reapply current speed before planning
+  move_group_->setMaxVelocityScalingFactor(current_speed_);
+  move_group_->setMaxAccelerationScalingFactor(current_speed_);
 
   move_group_->setPoseReferenceFrame(pose_msg.header.frame_id);
   move_group_->setPoseTarget(pose_msg.pose);
@@ -136,8 +155,7 @@ bool PickController::move_to_pose(const geometry_msgs::msg::PoseStamped& pose_ms
   }
 }
 
-} 
-
+} // namespace parol6_pipeline
 
 int main(int argc, char * argv[])
 {
