@@ -376,7 +376,7 @@ private:
       oss << std::fixed << std::setprecision(3)
           << "Box Detected:\n"
           << "  Color: " << color << "\n"
-          << "  Size (L x W x H): " << L << "m x " << W << "m x " << height << "m\n"
+          << "  Size (L x W ): " << L << "m x " << W << "m\n"
           << "  Position (X, Y, Z): " << C[0] << ", " << C[1] << ", " << C[2] << " [m]\n"
           << "  Orientation (R, P, Y): "
           << roll * 180 / M_PI << ", "

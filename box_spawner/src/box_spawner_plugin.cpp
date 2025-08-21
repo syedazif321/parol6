@@ -42,7 +42,7 @@ private:
 
   std::map<std::string, int> color_counter_ = {{"Red", 1}, {"Blue", 1}};
 
-  double mass_ = 15.0; 
+  double mass_ = 20.0; 
 
   void SpawnBoxCallback(
     const std_srvs::srv::Trigger::Request::SharedPtr,
