@@ -74,19 +74,17 @@ target_link_libraries(pick_controller_node
   tf2_geometry_msgs::tf2_geometry_msgs
 )
 
-# ==================== Analytics Logger Node ====================
-add_executable(analytics_logger_node src/analytics_logger_node.cpp)
-ament_target_dependencies(analytics_logger_node
-  rclcpp
-  std_msgs
-  std_srvs
-  nlohmann_json
-)
-target_link_libraries(analytics_logger_node
-  SQLite::SQLite3
-)
+# add_executable(analytics_logger_node src/analytics_logger_node.cpp)
+# ament_target_dependencies(analytics_logger_node
+#   rclcpp
+#   std_msgs
+#   std_srvs
+#   nlohmann_json
+# )
+# target_link_libraries(analytics_logger_node
+#   SQLite::SQLite3
+# )
 
-# ==================== Pipeline FSM Node ====================
 add_executable(pipeline_fsm_node src/pipeline_fsm_node.cpp)
 ament_target_dependencies(pipeline_fsm_node
   rclcpp
@@ -114,7 +112,7 @@ endif()
 install(TARGETS
   box_detector_node
   pick_controller_node
-  analytics_logger_node
+  # analytics_logger_node
   pipeline_fsm_node
   DESTINATION lib/${PROJECT_NAME}
 )

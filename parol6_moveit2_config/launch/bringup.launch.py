@@ -208,18 +208,18 @@ def generate_launch_description():
         ]
     )
 
-    analytics_logger_node = Node(
-        package='parol6_pipeline',
-        executable='analytics_logger_node',
-        output='screen',
-        parameters=[
-            robot_description,
-            robot_description_semantic,
-            {"robot_description_kinematics": kinematics_yaml},
-            joint_limits,
-            {"use_sim_time": use_sim}
-        ]
-    )
+    # analytics_logger_node = Node(
+    #     package='parol6_pipeline',
+    #     executable='analytics_logger_node',
+    #     output='screen',
+    #     parameters=[
+    #         robot_description,
+    #         robot_description_semantic,
+    #         {"robot_description_kinematics": kinematics_yaml},
+    #         joint_limits,
+    #         {"use_sim_time": use_sim}
+    #     ]
+    # )
 
     return LaunchDescription([
         declare_use_sim,
@@ -234,6 +234,6 @@ def generate_launch_description():
         pick_controller_node,
         box_detector_node,
         pipeline_node,
-        analytics_logger_node
+        # analytics_logger_node
 
     ])

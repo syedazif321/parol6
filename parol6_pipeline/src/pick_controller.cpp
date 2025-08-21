@@ -1,25 +1,33 @@
-// File: src/pick_controller.cpp
+
 
 #include "parol6_pipeline/pick_controller.hpp"
+
+// ROS & MoveIt
 #include <moveit_msgs/msg/move_it_error_codes.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp/duration.hpp> 
+
+
+#include <memory>
 
 namespace parol6_pipeline
 {
 
 PickController::PickController(const rclcpp::NodeOptions & options)
-: Node("pick_controller", options)
+: Node("pick_controller", options),
+  logger_(get_logger()),
+  received_pose_(false),
+  move_group_initialized_(false)
 {
   RCLCPP_INFO(logger_, "PickController started. Waiting for /detected_box_pose and /start_picking trigger.");
 
-  // Subscribe to box pose
   pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     "/detected_box_pose",
     10,
     std::bind(&PickController::pose_callback, this, std::placeholders::_1)
   );
 
-  // Create service to trigger picking
+ 
   trigger_srv_ = create_service<std_srvs::srv::Trigger>(
     "start_picking",
     [this](
@@ -27,6 +35,7 @@ PickController::PickController(const rclcpp::NodeOptions & options)
       std::shared_ptr<std_srvs::srv::Trigger::Response> response
     )
     {
+
       if (!received_pose_) {
         response->success = false;
         response->message = "No box pose received yet!";
@@ -34,7 +43,6 @@ PickController::PickController(const rclcpp::NodeOptions & options)
         return;
       }
 
-      // Initialize MoveGroupInterface on first use (if not already)
       if (!move_group_initialized_) {
         initialize_move_group();
         if (!move_group_) {
@@ -69,14 +77,19 @@ void PickController::pose_callback(const geometry_msgs::msg::PoseStamped::Shared
 {
   latest_pose_ = *msg;
   received_pose_ = true;
-  RCLCPP_INFO_ONCE(logger_, "Received first detected box pose from frame '%s'", msg->header.frame_id.c_str());
+  RCLCPP_INFO_ONCE(logger_, "Received first detected box pose from frame '%s'",
+                   msg->header.frame_id.c_str());
 }
 
 void PickController::initialize_move_group()
 {
   try {
     move_group_ = std::make_unique<moveit::planning_interface::MoveGroupInterface>(shared_from_this(), "arm");
-    RCLCPP_INFO(logger_, "MoveGroupInterface initialized successfully.");
+
+    move_group_->setMaxVelocityScalingFactor(1.0);
+    move_group_->setMaxAccelerationScalingFactor(1.0);
+
+    RCLCPP_INFO(logger_, "MoveGroupInterface initialized with 1.0x velocity and acceleration scaling.");
   } catch (const std::exception& e) {
     RCLCPP_ERROR(logger_, "Failed to initialize MoveGroupInterface: %s", e.what());
     move_group_.reset();
@@ -90,6 +103,9 @@ bool PickController::move_to_pose(const geometry_msgs::msg::PoseStamped& pose_ms
     return false;
   }
 
+  move_group_->setMaxVelocityScalingFactor(1.0);
+  move_group_->setMaxAccelerationScalingFactor(1.0);
+
   move_group_->setPoseReferenceFrame(pose_msg.header.frame_id);
   move_group_->setPoseTarget(pose_msg.pose);
 
@@ -102,6 +118,13 @@ bool PickController::move_to_pose(const geometry_msgs::msg::PoseStamped& pose_ms
   }
 
   RCLCPP_INFO(logger_, "Planning successful! Executing motion...");
+
+  auto &pts = plan.trajectory_.joint_trajectory.points;
+  if (!pts.empty()) {
+    double duration = rclcpp::Duration(pts.back().time_from_start).seconds();
+    RCLCPP_INFO(logger_, "Planned trajectory duration: %.2f s", duration);
+  }
+
   moveit::core::MoveItErrorCode exec_result = move_group_->execute(plan);
 
   if (exec_result.val == moveit_msgs::msg::MoveItErrorCodes::SUCCESS) {
