@@ -157,3 +157,4 @@ parol6/
 
 ---
 
+use exposrt gazebo model path export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/home/azif/ liek thsi 
