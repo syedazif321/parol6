@@ -1,8 +1,3 @@
-Got it 👍 Since I can’t directly open the repo tree right now, I’ll base the **new README** on what you already told me about the repo structure and features (your packages: `parol6_description`, `parol6_moveit2_config`, `parol6_gazebo`, `parol6_gui`, `parol6_pipeline`, plus conveyor and vision parts).
-
-Here’s a **fresh README** that ignores the old one and reflects the full project setup with your given launch and GUI commands:
-
----
 
 # Parol6 Robotic Arm (ROS 2 Humble)
 
