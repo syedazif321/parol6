@@ -152,4 +152,8 @@ parol6/
 
 ---
 
-use exposrt gazebo model path export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/home/azif/ liek thsi 
+use exposrt gazebo model path export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/home/azif/parol6/install/parol6_description/share/parol6_description
+
+ros2 service call /start_pipeline std_srvs/srv/Trigger 
+
+export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$(ros2 pkg prefix parol6_description)/share
