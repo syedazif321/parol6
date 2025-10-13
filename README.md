@@ -1,3 +1,13 @@
+That's great\! To fully integrate the GIFs and document the necessary environment variable, I'll update your README. I'll create a dedicated **Demos** section and a proper **Setup** step for the `GAZEBO_MODEL_PATH`.
+
+Assuming your GIFs are located in the path you provided:
+`/home/azif/projetcs/parol6/gif/`
+
+For the GIFs to show up when browsing the README on a platform like GitHub, they need to be stored in a **relative path** *within* your repository. I will assume you will create a `gif/` folder in the root of your repository and place the files there.
+
+**Correct Relative Path:** `./gif/box_spawning.gif`
+
+-----
 
 # Parol6 Robotic Arm (ROS 2 Humble)
 
@@ -46,19 +56,15 @@ The **Parol6** project is a complete ROS 2 workspace for simulation, motion plan
 
 ## 🚀 Launch Instructions
 
-### 0\. Set Environment Variables (Crucial for Gazebo)
+### 0\. Set Environment Variables (Required)
 
-Gazebo requires the model path to be set to find the robot's URDF and meshes. Run this **before** launching Gazebo:
+Before launching Gazebo, you **must** inform it where to find the Parol6 model files.
 
-```bash
-export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$(ros2 pkg prefix parol6_description)/share
-```
-
-*Alternatively, you can use the direct installation path:*
-
-```bash
-export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/home/azif/projetcs/parol6/install/parol6_description/share
-```
+  * **Temporary Export (Current Terminal):**
+    ```bash
+    export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$(ros2 pkg prefix parol6_description)/share
+    ```
+    *(Note: Replace `$(ros2 pkg prefix parol6_description)/share` with the hardcoded path `/home/azif/projetcs/parol6/install/parol6_description/share` if you prefer.)*
 
 ### 1\. Launch the robot, Gazebo, MoveIt 2, and RViz
 
@@ -70,7 +76,7 @@ ros2 launch parol6_moveit2_config bringup.launch.py
 
 ### 2\. Launch the GUI
 
-In a new terminal:
+In a new terminal (after setting `GAZEBO_MODEL_PATH`):
 
 ```bash
 ros2 run parol6_gui parol6_gui
@@ -78,11 +84,11 @@ ros2 run parol6_gui parol6_gui
 
 -----
 
-## 🎬 Demonstrations
+## 💡 Demonstrations
 
 ### GUI Operations
 
-Demonstration of the custom Qt GUI for real-time jogging and servo control.
+Demonstration of the custom Qt GUI for jogging and controlling the robot's servo features.
 
 ### Object Spawning
 
@@ -147,7 +153,7 @@ sudo apt install ros-humble-moveit ros-humble-gazebo-ros-pkgs ros-humble-ros2-co
 
 ```
 parol6/
-├── gif/                     # Animated demonstration GIFs
+├── gif/                     # <--- YOUR GIFS ARE HERE
 ├── parol6_description/      # URDF, xacro, meshes
 ├── parol6_moveit2_config/   # MoveIt 2 config + bringup.launch.py
 ├── parol6_gazebo/           # Gazebo worlds, conveyor
