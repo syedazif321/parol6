@@ -87,19 +87,19 @@ ros2 run parol6_gui parol6_gui
 
 Demonstration of the custom Qt GUI for real-time jogging and servo control.
 
-**YOUR GIF IS HERE:**
+![GUI Operations GIF](./gif/gui_operations.gif)
 
 ### Object Spawning
 
 Illustrates the use of the Gazebo service to spawn a box object into the simulated environment.
 
-**YOUR GIF IS HERE:**
+![GUI Operations GIF](./gif/box_spawning.gif)
 
 ### Full Pipeline Execution
 
 The complete pick-and-place sequence, from object detection to motion planning and gripper action.
 
-**YOUR GIF IS HERE:**
+![GUI Operations GIF](./gif/pipeline-execution.gif)
 
 -----
 
