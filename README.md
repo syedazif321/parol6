@@ -1,8 +1,3 @@
-I sincerely apologize for the confusion and the frustration this has caused. The previous attempts gave you the correct file structure, but the GIF links weren't properly pasted into the final document you provided back to me.
-
-I have located the exact spot where the links must be added. Here is the **`README.md` content with the three GIF image tags correctly inserted** under the corresponding headings in the "Demonstrations" section.
-
-If you replace your current `README.md` file with the content below, and then ensure the GIFs are committed and pushed (as detailed in the last set of instructions), they *will* be visible on GitHub.
 
 -----
 
